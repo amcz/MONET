@@ -1,182 +1,277 @@
+"""Short summary.
+
+    Attributes
+    ----------
+    url : type
+        Description of attribute `url`.
+    dates : type
+        Description of attribute `dates`.
+    df : type
+        Description of attribute `df`.
+    daily : type
+        Description of attribute `daily`.
+    objtype : type
+        Description of attribute `objtype`.
+    filelist : type
+        Description of attribute `filelist`.
+    monitor_file : type
+        Description of attribute `monitor_file`.
+    __class__ : type
+        Description of attribute `__class__`.
+    monitor_df : type
+        Description of attribute `monitor_df`.
+    savecols : type
+        Description of attribute `savecols`.
+    """
+
 from __future__ import print_function
 
 import inspect
 import os
-# this is written to retrive airnow data concatenate and add to pandas array for usage
+# this is written to retrive airnow data concatenate and add to pandas array
+# for usage
 from builtins import object
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pandas as pd
-from numpy import array
 
 
-class AirNow(object):
-    def __init__(self):
-        self.datadir = '.'
-        self.cwd = os.getcwd()
-        self.url = None
-        self.dates = [datetime.strptime('2016-06-06 12:00:00', '%Y-%m-%d %H:%M:%S'),
-                      datetime.strptime('2016-06-06 13:00:00', '%Y-%m-%d %H:%M:%S')]
-        self.datestr = []
-        self.df = None
-        self.se_states = array(
-            ['AL', 'FL', 'GA', 'MS', 'NC', 'SC', 'TN',
-             'VA', 'WV'], dtype='|S14')
-        self.ne_states = array(['CT', 'DE', 'DC', 'ME', 'MD', 'MA',
-                                'NH', 'NJ', 'NY', 'PA', 'RI', 'VT'],
-                               dtype='|S20')
-        self.nc_states = array(
-            ['IL', 'IN', 'IA', 'KY', 'MI', 'MN', 'MO', 'OH', 'WI'],
-            dtype='|S9')
-        self.sc_states = array(['AR', 'LA', 'OK', 'TX'], dtype='|S9')
-        self.r_states = array(['AZ', 'CO', 'ID', 'KS', 'MT', 'NE', 'NV', 'NM',
-                               'ND', 'SD', 'UT', 'WY'], dtype='|S12')
-        self.p_states = array(['CA', 'OR', 'WA'], dtype='|S10')
-        self.objtype = 'AirNow'
-        self.filelist = None
-        self.monitor_file = inspect.getfile(
-            self.__class__)[:-16] + '/data/monitoring_site_locations.dat'
-        self.monitor_df = None
-        self.savecols = ['datetime', 'SCS', 'Site', 'utcoffset', 'Species', 'Units', 'Obs', 'datetime_local',
-                         'Site_Name', 'Latitude', 'Longitude', 'CMSA_Name', 'MSA_Code', 'MSA_Name', 'State_Name',
-                         'EPA_region']
+datadir = '.'
+cwd = os.getcwd()
+url = None
+dates = [
+    datetime.strptime('2016-06-06 12:00:00', '%Y-%m-%d %H:%M:%S'),
+    datetime.strptime('2016-06-06 13:00:00', '%Y-%m-%d %H:%M:%S')
+]
+daily = False
+objtype = 'AirNow'
+filelist = None
+monitor_df = None
+savecols = [
+    'time', 'siteid', 'site', 'utcoffset', 'variable', 'units', 'obs',
+    'time_local', 'latitude', 'longitude', 'cmsa_name', 'msa_code',
+    'msa_name', 'state_name', 'epa_region'
+]
 
-    def convert_dates_tofnames(self):
-        self.datestr = []
-        for i in self.dates:
-            self.datestr.append(i.strftime('%Y%m%d%H.dat'))
 
-    def change_path(self):
-        os.chdir(self.datadir)
+def build_urls(dates):
+    """Short summary.
 
-    def change_back(self):
-        os.chdir(self.cwd)
+    Returns
+    -------
+    helper function to build urls
 
-    def build_urls(self):
-        from numpy import empty, where
-        import wget
-        import requests
-        from glob import glob
+    """
 
-        furls = []
+    furls = []
+    fnames = []
+    print('Building AIRNOW URLs...')
+    # 2017/20170131/HourlyData_2017012408.dat
+    url = 'https://s3-us-west-1.amazonaws.com//files.airnowtech.org/airnow/'
+    for i in dates:
+        f = url + i.strftime('%Y/%Y%m%d/HourlyData_%Y%m%d%H.dat')
+        fname = i.strftime('HourlyData_%Y%m%d%H.dat')
+        furls.append(f)
+        fnames.append(fname)
+    # https://s3-us-west-1.amazonaws.com//files.airnowtech.org/airnow/2017/20170108/HourlyData_2016121506.dat
 
-        print('Retrieving AIRNOW files...')
-        # 2017/20170131/HourlyData_2017012408.dat
-        url = 'https://s3-us-west-1.amazonaws.com//files.airnowtech.org/airnow/'
-        for i in self.dates:
-            f = url + i.strftime('%Y/%Y%m%d/HourlyData_%Y%m%d%H.dat')
-            furls.append(f)
+    # files needed for comparison
+    url = pd.Series(furls, index=None)
+    fnames = pd.Series(fnames, index=None)
+    return url, fnames
 
-        # files needed for comparison
-        self.url = pd.Series(furls, index=None)
 
-    def read_csv(self, fn):
-        try:
-            dft = pd.read_csv(fn, delimiter='|', header=None,
-                              error_bad_lines=False)
-            cols = ['date', 'time', 'SCS', 'Site', 'utcoffset',
-                    'Species', 'Units', 'Obs', 'Source']
-            dft.columns = cols
-        except:
-            cols = ['date', 'time', 'SCS', 'Site', 'utcoffset',
-                    'Species', 'Units', 'Obs', 'Source']
-            dft = pd.DataFrame(columns=cols)
-        return dft
+def read_csv(fn):
+    """Short summary.
 
-    def aggragate_files(self):
-        import dask
-        import dask.dataframe as dd
+    Parameters
+    ----------
+    fn : string
+        file name to read
 
-        print('Aggregating AIRNOW files...')
-        self.build_urls()
-        dfs = [dask.delayed(self.read_csv)(f) for f in self.url]
-        dff = dd.from_delayed(dfs)
-        df = dff.compute()
-        df['datetime'] = pd.to_datetime(
-            df.date + ' ' + df.time, format='%m/%d/%y %H:%M', exact=True, box=False)
-        df.drop(['date', 'time'], axis=1, inplace=True)
-        df['datetime_local'] = df.datetime + \
-                               pd.to_timedelta(df.utcoffset, unit='H')
-        self.df = df
-        print('    Adding in Meta-data')
-        self.get_station_locations()
-        self.df = self.df[self.savecols]
-        self.df.drop_duplicates(inplace=True)
+    Returns
+    -------
+    type
+        Description of returned object.
 
-    def calc_datetime(self):
-        # takes in an array of string dates and converts to numpy array of datetime objects
-        dt = []
-        for i in self.df.utcoffset.values:
-            dt.append(timedelta(hours=i))
-        self.df['datetime_local'] = self.df.datetime + dt
+    """
+    try:
+        dft = pd.read_csv(
+            fn,
+            delimiter='|',
+            header=None,
+            error_bad_lines=False,
+            encoding='ISO-8859-1')
+        cols = [
+            'date', 'time', 'siteid', 'site', 'utcoffset', 'variable',
+            'units', 'obs', 'source'
+        ]
+        dft.columns = cols
+    except Exception:
+        cols = [
+            'date', 'time', 'siteid', 'site', 'utcoffset', 'variable',
+            'units', 'obs', 'source'
+        ]
+        dft = pd.DataFrame(columns=cols)
+    dft['obs'] = dft.obs.astype(float)
+    dft['siteid'] = dft.siteid.str.zfill(9)
+    dft['utcoffset'] = dft.utcoffset.astype(int)
+    return dft
 
-    def set_daterange(self, begin='', end=''):
-        dates = pd.date_range(start=begin, end=end,
-                              freq='H').values.astype('M8[s]').astype('O')
-        self.dates = dates
 
-    def get_station_locations(self):
-        self.read_monitor_file()
-        self.df = pd.merge(self.df, self.monitor_df, on='SCS', how='left')
+def retrieve(url, fname):
+    """Download files from the airnowtech S3 server.
 
-    def get_station_locations_remerge(self, df):
-        df = pd.merge(df, self.monitor_df.drop(
-            ['Latitude', 'Longitude'], axis=1), on='SCS', how='left')
-        return df
+    Parameters
+    ----------
+    url : string
+        Description of parameter `url`.
+    fname : string
+        Description of parameter `fname`.
 
-    def read_monitor_file(self):
-        try:
-            print('    Monitor Station Meta-Data Found: Compiling Dataset')
-            monitor_url = 'https://s3-us-west-1.amazonaws.com//files.airnowtech.org/airnow/today/monitoring_site_locations.dat'
-            colsinuse = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-                         11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
-            f = pd.read_csv(monitor_url, delimiter='|',
-                            header=None, usecols=colsinuse)
-            f.columns = ['SCS', 'Site_Code', 'Site_Name', 'Status', 'Agency', 'Agency_Name', 'EPA_region', 'Latitude',
-                         'Longitude', 'Elevation', 'GMT_Offset', 'Country_Code', 'CMSA_Code', 'CMSA_Name', 'MSA_Code',
-                         'MSA_Name', 'State_Code', 'State_Name', 'County_Code', 'County_Name', 'City_Code']
-        except:
-            from glob import glob
-            if os.path.isfile(self.monitor_file) == True:
-                print('    Monitor Station Meta-Data Found: Compiling Dataset')
-                fname = self.monitor_file
-            else:
-                self.openftp()
-                self.ftp.cwd('Locations')
-                self.download_single_rawfile(
-                    fname='monitoring_site_locations.dat')
-            fname = glob('monitoring_site_locations.dat')[0]
-            colsinuse = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-                         11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
-            f = pd.read_csv(fname, delimiter='|',
-                            header=None, usecols=colsinuse)
-            f.columns = ['SCS', 'Site_Code', 'Site_Name', 'Status', 'Agency', 'Agency_Name', 'EPA_region', 'Latitude',
-                         'Longitude', 'Elevation', 'GMT_Offset', 'Country_Code', 'CMSA_Code', 'CMSA_Name', 'MSA_Code',
-                         'MSA_Name', 'State_Code', 'State_Name', 'County_Code', 'County_Name', 'City_Code']
+    Returns
+    -------
+    None
 
-        self.monitor_df = f.copy()
+    """
+    import requests
 
-    def get_region(self):
-        sr = self.df.State_Name.copy().values
-        for i in self.se_states:
-            con = sr == i
-            sr[con] = 'Southeast'
-        for i in self.ne_states:
-            con = sr == i
-            sr[con] = 'Northeast'
-        for i in self.nc_states:
-            con = sr == i
-            sr[con] = 'North Central'
-        for i in self.sc_states:
-            con = sr == i
-            sr[con] = 'South Central'
-        for i in self.p_states:
-            con = sr == i
-            sr[con] = 'Pacific'
-        for i in self.r_states:
-            con = sr == i
-            sr[con] = 'Rockies'
-        sr[sr == 'CC'] = 'Canada'
-        sr[sr == 'MX'] = 'Mexico'
+    if not os.path.isfile(fname):
+        print('\n Retrieving: ' + fname)
+        print(url)
+        print('\n')
+        r = requests.get(url)
+        open(fname, 'wb').write(r.content)
+    else:
+        print('\n File Exists: ' + fname)
 
-        self.df['Region'] = array(sr)
+
+def aggregate_files(dates=dates, download=False):
+    """Short summary.
+
+    Parameters
+    ----------
+    download : type
+        Description of parameter `download` (the default is False).
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+    import dask
+    import dask.dataframe as dd
+
+    print('Aggregating AIRNOW files...')
+    urls, fnames = build_urls(dates)
+    if download:
+        for url, fname in zip(url, fnames):
+            retrieve(url, fname)
+        dfs = [dask.delayed(read_csv)(f) for f in fnames]
+    else:
+        dfs = [dask.delayed(read_csv)(f) for f in urls]
+    dff = dd.from_delayed(dfs)
+    df = dff.compute()
+    df['time'] = pd.to_datetime(
+        df.date + ' ' + df.time,
+        format='%m/%d/%y %H:%M',
+        exact=True,
+        box=False)
+    df.drop(['date'], axis=1, inplace=True)
+    df['time_local'] = df.time + pd.to_timedelta(df.utcoffset, unit='H')
+    print('    Adding in Meta-data')
+    df = get_station_locations(df)
+    df = df[savecols]
+    df.drop_duplicates(inplace=True)
+    df = filter_bad_values(df)
+    return df
+
+
+def add_data(dates, download=False):
+    """Short summary.
+
+    Parameters
+    ----------
+    dates : type
+        Description of parameter `dates`.
+    download : type
+        Description of parameter `download` (the default is False).
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+
+    df = aggregate_files(dates=dates, download=download)
+    return df
+
+
+def filter_bad_values(df):
+    """Short summary.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+    from numpy import NaN
+    df.loc[(df.obs > 3000) | (df.obs < 0), 'obs'] = NaN
+    return df
+
+
+def daterange(**kwargs):
+    """Short summary.
+
+    Parameters
+    ----------
+    begin : type
+        Description of parameter `begin` (the default is '').
+    end : type
+        Description of parameter `end` (the default is '').
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+    return pd.date_range(**kwargs)
+
+
+def get_station_locations(df):
+    """Short summary.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+    from .epa_util import read_monitor_file
+    monitor_df = read_monitor_file(airnow=True)
+    df = pd.merge(df, monitor_df, on='siteid')  # , how='left')
+    return df
+
+
+def get_station_locations_remerge(df):
+    """Short summary.
+
+    Parameters
+    ----------
+    df : type
+        Description of parameter `df`.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+    df = pd.merge(df, monitor_df.drop(['Latitude', 'Longitude'], axis=1),
+                  on='siteid')  # ,
+    # how='left')
+    return df
