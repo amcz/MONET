@@ -36,22 +36,103 @@ class MONET(object):
 
         """
         """ adds model to monet object
+
                  for more information on kwargs see: self.add_cmaq
                                            self.add_camx
          """
         if model.upper() == 'CMAQ':
-            from .models.cmaq import CMAQ
-            #m = self.add_cmaq(**kwargs)
-            mmm = CMAQ()
+            m = self.add_cmaq(**kwargs)
         if model.upper() == 'CAMX':
-            from .models.camx import CMAQ
-            mmm = CAMx()
-        if model.upper() == 'HYSPLIT':
-            from .models.hysplit import HYSPLIT
-            mmm = HYSPLIT()
-        mmm.open_files(**kwargs)
-        return mmm
+            m = self.add_camx(**kwargs)
+        return m
 
+    def add_cmaq(self, gridcro2d=None, emission=None, metcro2d=None, metcro3d=None, depn=None, conc=None):
+        """Short summary.
+
+        Parameters
+        ----------
+        gridcro2d : type
+            Description of parameter `gridcro2d` (the default is None).
+        emission : type
+            Description of parameter `emission` (the default is None).
+        metcro2d : type
+            Description of parameter `metcro2d` (the default is None).
+        metcro3d : type
+            Description of parameter `metcro3d` (the default is None).
+        depn : type
+            Description of parameter `depn` (the default is None).
+        conc : type
+            Description of parameter `conc` (the default is None).
+
+        Returns
+        -------
+        type
+            Description of returned object.
+
+        """
+        from .models.cmaq import CMAQ
+        model = CMAQ()
+        if gridcro2d is not None:
+            model.set_gridcro2d(gridcro2d)
+        if emission is not None:
+            model.open_cmaq(emission)
+        if metcro2d is not None:
+            model.open_cmaq(metcro2d)
+        if metcro3d is not None:
+            model.open_cmaq(metcro3d)
+        if depn is not None:
+            model.open_cmaq(depn)
+        if conc is not None:
+            model.open_cmaq(conc)
+        return model
+
+    def add_camx(self, met2d=None, sfc2d=None, cld3d=None, kv=None, met3d=None, avrg=None, emission=None, depn=None):
+        """Short summary.
+
+        Parameters
+        ----------
+        met2d : type
+            Description of parameter `met2d` (the default is None).
+        sfc2d : type
+            Description of parameter `sfc2d` (the default is None).
+        cld3d : type
+            Description of parameter `cld3d` (the default is None).
+        kv : type
+            Description of parameter `kv` (the default is None).
+        met3d : type
+            Description of parameter `met3d` (the default is None).
+        avrg : type
+            Description of parameter `avrg` (the default is None).
+        emission : type
+            Description of parameter `emission` (the default is None).
+        depn : type
+            Description of parameter `depn` (the default is None).
+
+        Returns
+        -------
+        type
+            Description of returned object.
+
+        """
+        from .models.camx import CAMx
+        model = CAMx()
+        if met2d is not None:
+            model.set_gridcro2d(met2d)
+        if sfc2d is not None:
+            model.open_cmaq(sfc2d)
+        if cld3d is not None:
+            model.open_cmaq(cld3d)
+        if kv is not None:
+            model.open_cmaq(kv)
+        if met3d is not None:
+            model.open_cmaq(met3d)
+        if avrg is not None:
+            model.open_cmaq(avrg)
+        if emission is not None:
+            model.open_cmaq(emission)
+        if depn is not None:
+            model.open_cmaq(depn)
+        return model
 
     def add_obs(self, obs='AirNOW', **kwargs):
         """Short summary.

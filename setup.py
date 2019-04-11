@@ -11,16 +11,27 @@ except:
 
 setup(
     name='monet',
-    version='1.2',
+    version='2.1.2',
     url='https://github.com/noaa-oar-arl/MONET',
     license='MIT',
+    include_package_data=True,
     author='Barry D. Baker',
     author_email='barry.baker@noaa.gov',
     maintainer='Barry Baker',
     maintainer_email='barry.baker@noaa.gov',
     packages=find_packages(),
-    keywords=['model', 'verification', 'hysplit', 'cmaq', 'atmosphere', 'camx', 'evaluation'],
+    package_data={
+        '': [
+            'data/*.txt', 'data/*.dat', 'data/*.hdf', 'data/*.ncf',
+            'data/*.jpg', 'data/*.png'
+        ]
+    },
+    keywords=[
+        'model', 'verification', 'hysplit', 'cmaq', 'atmosphere', 'camx',
+        'evaluation'
+    ],
     description='The Model and Observation Evaluation Toolkit (MONET)',
-    install_requires=['f90nml', 'numpy', 'pandas', 'wget', 'pyresample', 'netcdf4', 'pynio', 'xarray', 'dask', 'matplotlib', 'seaborn', 'pseudonetcdf'],
-    dependency_links=["git+ssh://git@github.com/barronh/pseudonetcdf.git@develop", "git+ssh://git@github.com/barronh/xarray.git@pnc-backend"]
-)
+    install_requires=[
+        'pandas', 'netcdf4', 'xarray', 'dask', 'xesmf', 'pyresample',
+        'matplotlib', 'seaborn', 'future', 'cartopy'
+    ])
