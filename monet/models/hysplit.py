@@ -18,11 +18,12 @@ def _hysplit_latlon_grid_from_dataset(ds):
 
 def get_hysplit_latlon_pyresample_area_def(ds, proj4_srs):
     from pyresample import geometry
-    mgrid = np.meshgrid(ds.longitude.values, ds.latitude.values)
-   # return geometry.SwathDefinition(
-   #     lons=ds.longitude.values, lats=ds.latitude.values)
+    
+   # mgrid = np.meshgrid(ds.longitude.values, ds.latitude.values)
     return geometry.SwathDefinition(
-        lons=mgrid[0], lats=mgrid[1])
+        lons=ds.longitude.values, lats=ds.latitude.values)
+   # return geometry.SwathDefinition(
+   #     lons=mgrid[0], lats=mgrid[1])
 
 
 def check_drange(drange, pdate1, pdate2, verbose):
@@ -389,6 +390,7 @@ class ModelBin(object):
         #concframe.drop(['jndx', 'indx'], axis=1, inplace=True)
         concframe['levels'] = lev_name
         concframe['time'] = pdate1
+
         #rename jndx x
         #rename indx y
         names = concframe.columns.values
@@ -569,12 +571,9 @@ class ModelBin(object):
                    self.dset.assign_coords(longitude=(('y','x'),mgrid[1]))
             self.dset =\
                    self.dset.assign_coords(latitude=(('y','x'),mgrid[0]))
-            #self.dset =\
-            #       self.dset.assign_coords(longitude=(('y','x'),mgrid[1]))
-            #       #self.dset.assign_coords(longitude=self.dset['longitude'])
-            #self.dset =\
-            #       self.dset.assign_coords(latitude=mgrid[0])
-            #       #self.dset.assign_coords(latitude=self.dset['latitude'])
+
+            self.dset = self.dset.reset_coords()
+            self.dset = self.dset.set_coords(['time','latitude','longitude'])
         if verbose:
             print(self.dset)
         if iii == 0:
