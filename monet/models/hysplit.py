@@ -1,9 +1,10 @@
 """ HYPSLIT MODEL READER """
+import datetime
 import pandas as pd
 import xarray as xr
 import numpy as np
-import datetime
 from numpy import fromfile, arange
+
 
 def _hysplit_latlon_grid_from_dataset(ds):
     pargs = dict()
@@ -17,11 +18,45 @@ def _hysplit_latlon_grid_from_dataset(ds):
 
 def get_hysplit_latlon_pyresample_area_def(ds, proj4_srs):
     from pyresample import geometry
-    mgrid = np.meshgrid(ds.longitude.values,ds.latitude.values)
+    mgrid = np.meshgrid(ds.longitude.values, ds.latitude.values)
    # return geometry.SwathDefinition(
    #     lons=ds.longitude.values, lats=ds.latitude.values)
     return geometry.SwathDefinition(
         lons=mgrid[0], lats=mgrid[1])
+
+
+def check_drange(drange, pdate1, pdate2, verbose):
+    """
+    drange : list of two datetimes
+    pdate1 : datetime
+    pdate2 : datetime
+
+    Returns
+    savedata : boolean
+
+    returns True if drange is between pdate1 and pdate2
+    """
+    savedata = True
+    testf = True
+    # if pdate1 is within drange then save the data.
+    # AND if pdate2 is within drange then save the data.
+    # if drange[0] > pdate1 then stop looping to look for more data
+    # this block sets savedata to true if data within specified time
+    # range or time range not specified
+    if drange is None:
+        savedata = True
+    elif pdate1 >= drange[0] and pdate1 <= drange[1] and pdate2 <= drange[1]:
+        savedata = True
+    elif pdate1 > drange[1] or pdate2 > drange[1]:
+        testf = False
+        savedata = False
+    else:
+        savedata = False
+    # END block
+    if verbose:
+        print(savedata, 'DATES :', pdate1, pdate2)
+    return testf, savedata
+
 
 def open_dataset(fname, drange=None):
     """Short summary.
@@ -56,7 +91,7 @@ def open_dataset(fname, drange=None):
 
     # now assign this to the dataset and each dataarray
     dset = dset.assign_attrs({'proj4_srs': p4})
-    #return dset
+    # return dset
     for iii in dset.variables:
         dset[iii] = dset[iii].assign_attrs({'proj4_srs': p4})
         for jjj in dset[iii].attrs:
@@ -68,63 +103,28 @@ def open_dataset(fname, drange=None):
     return dset
 
 
-# class HYSPLIT(BaseModel):
-#     def __init__(self):
-#         BaseModel.__init__(self)
-#         self.dset = None
-#
-#     # use open_files method from the BaseModel class.
-#
-#     def add_files(self, cdump, verbose=True):
-#         # TO DO dset needs to be made into a regular array.
-#         binfile = ModelBin(cdump, verbose=False, readwrite='r')
-#         dset = binfile.dset
-#         if self.dset is None:
-#             self.dset = dset
-#         else:
-#             #self.dset = xr.merge([self.dset, dset])
-#             self.dset.combine_first(dset)
-#             print(self.dset)
-#
-#     @staticmethod
-#     def select_layer(variable, layer=None):
-#         if lay is not None:
-#             try:
-#                 var = variable.sel(levels=layer)
-#             except ValueError:
-#                 print(
-#                     'Dimension \'levels\' not in Dataset.  Returning Dataset
-#                      anyway'
-#                 )
-#                 var = variable
-#         else:
-#             var = variable
-#         return var
-#
-#     def get_var(self, param, layer=None):
-#         return self.select_layer(self.dset[param], layer=layer)
-
-
 class ModelBin(object):
-    """represents a binary cdump (concentration) output file from HYSPLIT
+    """
+       represents a binary cdump (concentration) output file from HYSPLIT
        methods:
        readfile - opens and reads contents of cdump file into an xarray
        self.dset
-
     """
-
     def __init__(self,
                  filename,
                  drange=None,
                  century=None,
                  verbose=False,
-                 readwrite='r',
-                 fillra=True):
+                 readwrite='r'):
         """
-          drange should be a list of two datetime objects.
-           The read method will store data from the cdump file for which the
-           sample start is greater thand drange[0] and less than drange[1]
-           for which the sample stop is less than drange[1].
+        drange :  list of two datetime objects.
+        The read method will store data from the cdump file for which the
+        sample start is greater thand drange[0] and less than drange[1]
+        for which the sample stop is less than drange[1].
+
+        century : integer
+        verbose : boolean
+        read
 
         """
         self.drange = drange
@@ -136,10 +136,24 @@ class ModelBin(object):
         self.zeroconcdates = []
         # list of tuples  of averaging periods with nonzero concentrtations]
         self.nonzeroconcdates = []
+        self.sourcedate = []
+        self.slat = []
+        self.slon = []
+        self.sht = []
         self.atthash = {}
+        self.atthash['Starting Locations'] = []
+        self.atthash['Source Date'] = []
+        self.llcrnr_lon = None
+        self.llcrnr_lat = None
+        self.nlat = None
+        self.nlon = None
+        self.dlat = None
+        self.dlon = None
+        self.levels = None
+
         if readwrite == 'r':
             self.dataflag = self.readfile(
-                filename, drange, verbose, century, fillra=fillra)
+                filename, drange, verbose, century)
 
     @staticmethod
     def define_struct():
@@ -249,8 +263,13 @@ class ModelBin(object):
                 rec8a, rec8b, rec8c)
         return recs
 
-
     def parse_header(self, hdata1):
+        """
+        hdata1 : dtype
+        Returns
+        nstartloc : int
+           number of starting locations in file.
+        """
         if len(hdata1['start_loc']) != 1:
             print(
                 'WARNING in ModelBin _readfile - number of starting locations '
@@ -267,22 +286,15 @@ class ModelBin(object):
         return nstartloc
 
     def parse_hdata2(self, hdata2, nstartloc, century):
-        self.sourcedate = []
-        self.slat = []
-        self.slon = []
-        self.sht = []
-        self.atthash['Starting Locations'] = []
-        self.atthash['Source Date'] = []
-
 
         # Loop through starting locations
-        for n in range(0, nstartloc):
+        for nnn in range(0, nstartloc):
             # create list of starting latitudes, longitudes and heights.
-            self.slat.append(hdata2['s_lat'][n])
-            self.slon.append(hdata2['s_lon'][n])
-            self.sht.append(hdata2['s_ht'][n])
-            self.atthash['Starting Locations'].append((hdata2['s_lat'][n],
-                                                  hdata2['s_lon'][n]))
+            self.slat.append(hdata2['s_lat'][nnn])
+            self.slon.append(hdata2['s_lon'][nnn])
+            self.sht.append(hdata2['s_ht'][nnn])
+            self.atthash['Starting Locations'].append((hdata2['s_lat'][nnn],
+                                                       hdata2['s_lon'][nnn]))
 
             # try to guess century if century not given
             if century is None:
@@ -295,12 +307,11 @@ class ModelBin(object):
                     century)
             # add sourcedate which is datetime.datetime object
             sourcedate = (datetime.datetime(
-                century + hdata2['r_year'][n], hdata2['r_month'][n],
-                hdata2['r_day'][n], hdata2['r_hr'][n], hdata2['r_min'][n]))
+                century + hdata2['r_year'][nnn], hdata2['r_month'][nnn],
+                hdata2['r_day'][nnn], hdata2['r_hr'][nnn], hdata2['r_min'][nnn]))
             self.sourcedate.append(sourcedate)
             self.atthash['Source Date'].append(sourcedate)
             return century
-
 
     def parse_hdata3(self, hdata3, ahash):
         # Description of concentration grid
@@ -324,12 +335,11 @@ class ModelBin(object):
         self.atthash['Number of Levels'] = hdata4a['nlev'][0]
         self.atthash['Level top heights (m)'] = hdata4b['levht']
 
-
     def parse_hdata6and7(self, hdata6, hdata7, century, verbose):
 
-        if len(hdata6
-               ) == 0:  # if no data read then break out of the while loop.
-           return False , None, None
+        # if no data read then break out of the while loop.
+        if not hdata6:
+            return False, None, None
         if verbose:
             print('REC 6 & 7 ***************')
             print(hdata6)
@@ -345,29 +355,15 @@ class ModelBin(object):
         self.atthash['Sampling Time'] = pdate2 - pdate1
         return True, pdate1, pdate2
 
-    def check_drange(self, drange, pdate1, pdate2, verbose):
-        savedata = True
-        # if pdate1 is within drange then save the data.
-        # AND if pdate2 is within drange then save the data.
-        # if drange[0] > pdate1 then stop looping to look for more data
-        # this block sets savedata to true if data within specified time
-        # range or time range not specified
-        if drange is None:
-            savedata = True
-        elif pdate1 >= drange[0] and pdate1 <= drange[1] and pdate2 <= drange[1]:
-            savedata = True
-        elif pdate1 > drange[1] or pdate2 > drange[1]:
-            testf = False
-            savedata = False
-        else:
-            savedata = False
-        # END block
-        if verbose:
-            print(savedata, 'DATES :', pdate1, pdate2)
-        return savedata
-
     def parse_hdata8(self, hdata8a, hdata8b, pdate1):
-        inc_iii = True
+        """
+        hdata8a : dtype
+        hdata8b : dtype
+        pdate1  : datetime
+
+        Returns:
+        concframe : DataFrame
+        """
         lev_name = hdata8a['lev'][0]
         col_name = hdata8a['poll'][0].decode('UTF-8')
         ndata = hdata8b.byteswap().newbyteorder(
@@ -380,14 +376,13 @@ class ModelBin(object):
         lon = arange(self.llcrnr_lon,
                      self.llcrnr_lon + self.nlon * self.dlon,
                      self.dlon)
+
         def flat(x):
             return lat[x - 1]
 
         def flon(x):
             return lon[x - 1]
 
-        def newndx(x):
-            return (x['jndx'],x['indx'])
         concframe['latitude'] = concframe['jndx'].apply(flat)
         concframe['longitude'] = concframe['indx'].apply(flon)
         concframe.drop(['jndx', 'indx'], axis=1, inplace=True)
@@ -400,8 +395,7 @@ class ModelBin(object):
             columns={'conc': col_name}, inplace=True)
         return concframe
 
-
-    def readfile(self, filename, drange, verbose, century, fillra=True):
+    def readfile(self, filename, drange, verbose, century):
         """Data from the file is stored in an xarray, self.dset
            returns False if all concentrations are zero else returns True.
            INPUTS
@@ -415,15 +409,12 @@ class ModelBin(object):
            For python 3 the numpy char4 are read in as a numpy.bytes_
             class and need to be converted to a python
            string by using decode('UTF-8').
-           fillra : if True will return complete concentration grid  array
-           with zero cocenctrations filled in
 
         """
         # 8/16/2016 moved species=[]  to before while loop. Added print
         # statements when verbose.
         self.dset = None
         # dictionaries which will be turned into the dset attributes.
-        atthash = {}
         ahash = {}
         fp = open(filename, 'rb')
 
@@ -446,7 +437,7 @@ class ModelBin(object):
 
         hdata2 = fromfile(fp, dtype=rec2, count=nstartloc)
         century = self.parse_hdata2(hdata2, nstartloc, century)
- 
+
         hdata3 = fromfile(fp, dtype=rec3, count=1)
         ahash = self.parse_hdata3(hdata3, ahash)
 
@@ -480,8 +471,9 @@ class ModelBin(object):
             hdata7 = fromfile(fp, dtype=rec6, count=1)
             check, pdate1, pdate2 = self.parse_hdata6and7(hdata6, hdata7,
                                                           century, verbose)
-            if not check: break
-            savedata = self.check_drange(drange, pdate1, pdate2, verbose)
+            if not check:
+                break
+            testf, savedata = check_drange(drange, pdate1, pdate2, verbose)
 
             # datelist = []
             self.atthash['Species ID'] = []
@@ -490,7 +482,6 @@ class ModelBin(object):
             for lev in range(self.atthash['Number of Levels']):
                 # LOOP to go through each pollutant
                 for pollutant in range(self.atthash['Number of Species']):
-
                     # record 8a has the number of elements (ne). If number of
                     # elements greater than 0 than there are concentrations.
                     hdata8a = fromfile(fp, dtype=rec8a, count=1)
@@ -498,9 +489,10 @@ class ModelBin(object):
                         hdata8a['poll'][0].decode('UTF-8'))
                     # if number of elements is nonzero then
                     if hdata8a['ne'] >= 1:
+                        # get rec8 - indx and jndx
                         hdata8b = fromfile(
                             fp, dtype=rec8b,
-                            count=hdata8a['ne'][0])  # get rec8 - indx and jndx
+                            count=hdata8a['ne'][0])
                         # add sample start time to list of start times with
                         # non zero conc
                         self.nonzeroconcdates.append(pdate1)
@@ -515,6 +507,7 @@ class ModelBin(object):
                     # the data in a pandas dataframe
                     if savedata and hdata8a['ne'] >= 1:
                         self.nonzeroconcdates.append(pdate1)
+                        inc_iii = True
                         concframe = self.parse_hdata8(hdata8a, hdata8b, pdate1)
                         dset = xr.Dataset.from_dataframe(concframe)
                         print('Combining datasets', 'Pollutant', pollutant,
