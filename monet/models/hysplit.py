@@ -17,8 +17,11 @@ def _hysplit_latlon_grid_from_dataset(ds):
 
 def get_hysplit_latlon_pyresample_area_def(ds, proj4_srs):
     from pyresample import geometry
+    mgrid = np.meshgrid(ds.longitude.values,ds.latitude.values)
+   # return geometry.SwathDefinition(
+   #     lons=ds.longitude.values, lats=ds.latitude.values)
     return geometry.SwathDefinition(
-        lons=ds.longitude.values, lats=ds.latitude.values)
+        lons=mgrid[0], lats=mgrid[1])
 
 def open_dataset(fname, drange=None):
     """Short summary.
@@ -47,19 +50,18 @@ def open_dataset(fname, drange=None):
     # open the dataset using xarray
     binfile = ModelBin(fname, drange=drange, verbose=False, readwrite='r')
     dset = binfile.dset
-    print(dset)
-
     # get the grid information
     p4 = _hysplit_latlon_grid_from_dataset(dset)
     swath = get_hysplit_latlon_pyresample_area_def(dset, p4)
 
     # now assign this to the dataset and each dataarray
     dset = dset.assign_attrs({'proj4_srs': p4})
-    for i in dset.variables:
-        dset[i] = dset[i].assign_attrs({'proj4_srs': p4})
-        for j in dset[i].attrs:
-            dset[i].attrs[j] = dset[i].attrs[j].strip()
-        dset[i] = dset[i].assign_attrs({'area': swath})
+    #return dset
+    for iii in dset.variables:
+        dset[iii] = dset[iii].assign_attrs({'proj4_srs': p4})
+        for jjj in dset[iii].attrs:
+            dset[iii].attrs[jjj] = dset[iii].attrs[jjj].strip()
+        dset[iii] = dset[iii].assign_attrs({'area': swath})
     dset = dset.assign_attrs(area=swath)
 
     # return the dataset
