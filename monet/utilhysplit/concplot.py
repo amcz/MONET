@@ -50,6 +50,19 @@ class ConcPlot(object):
        temp = self.hxr[alist[0]] 
       
 
+    def getra(self, lev, tm, splist=None, fillz=False):
+        """
+        would like to make this so input time would be a datetime object
+        and lev would be a height in meters.
+ 
+        currently these are the indices.
+        """
+        if not splist: splist = list(self.hxr.data_vars(keys())
+        val2d = sum_species(self.hxr, splist, time=tm,
+                                    z=lev, fillz=fillz)
+        return val2d
+
+
     def stepthru(self, splist=None, fillz=False):
         """
         splist: list of strings
