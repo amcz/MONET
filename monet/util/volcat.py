@@ -16,6 +16,28 @@ def open_dataset(fname):
       #dset = _get_latlon(dset)
       #dset = _get_time(dset)
       #print(dset.latitude.scale_factor)
+      
+      # AMC added block to drop un-needed data arrays
+      keeplist = ['pixel_latitude','pixel_longitude',
+                  'top_height','mass_loading', 'effective_radius']         
+      varnames = list(dset.data_vars)
+      for name in varnames:
+         #print('testing', name)
+          drp=True
+          for kp in keeplist:
+              if kp in name:
+                 drp=False 
+          if drp:
+             dset = dset.drop(name)
+
+      # AMC added to rename to x and y.
+      # not sure which should be x vs y?
+      dset = dset.rename({'lines':'x', 'elements':'y'})
+      # AMC added  lat and lon coordinates
+      lat = dset.pixel_latitude[:,:] * dset.pixel_latitude.scale_factor
+      lon = dset.pixel_longitude[:,:] * dset.pixel_longitude.scale_factor
+      dset = dset.assign_coords(longitude=(('y','x'), lon))
+      dset = dset.assign_coords(latitude=(('y','x'), lat))
       return dset
 
 def open_mfdataset(fname):
@@ -42,7 +64,7 @@ def _get_time(dset):
       #dset.dims['time'] = time
       return dset
 
-def _get_latlon(dset):
+def get_latlon(dset):
       lat = dset.pixel_latitude[:,:] * dset.pixel_latitude.scale_factor
       lon = dset.pixel_longitude[:,:] * dset.pixel_longitude.scale_factor
       dset = dset.rename({'pixel_latitude':'latitude'})
@@ -116,7 +138,7 @@ def plot_mass(dset):
       lon = dset.pixel_longitude[:,:]*dset.pixel_longitude.scale_factor
       #lat=dset.latitude
       #lon=dset.longitude
-      masked_mass=get_mass(dset)
+      masked_mass=get_mass_loading(dset)
       m=plt.axes(projection=ccrs.PlateCarree())
       m.add_feature(cfeat.LAND)
       m.add_feature(cfeat.COASTLINE)
@@ -124,4 +146,4 @@ def plot_mass(dset):
       plt.pcolormesh( lon, lat, masked_mass, transform=ccrs.PlateCarree())
       plt.colorbar()
       plt.title('Ash mass loading (g/m^2)')
-      pltshow()
+      plt.show()
