@@ -541,8 +541,8 @@ class ModelBin(object):
                         inc_iii = True
                         concframe = self.parse_hdata8(hdata8a, hdata8b, pdate1)
                         dset = xr.Dataset.from_dataframe(concframe)
-                        print('Combining datasets', 'Pollutant', pollutant,
-                              'Level', lev)
+                        #print('Combining datasets', 'Pollutant', pollutant,
+                        #      'Level', lev)
                         # if this is the first time through. create dataframe
                         # for first level and pollutant.
                         if self.dset is None:
@@ -568,9 +568,9 @@ class ModelBin(object):
             self.dset.attrs = self.atthash
             mgrid = self.makegrid(self.dset.coords['x'], self.dset.coords['y'])
             self.dset =\
-                   self.dset.assign_coords(longitude=(('y','x'),mgrid[1]))
+                   self.dset.assign_coords(longitude=(('y','x'),mgrid[0]))
             self.dset =\
-                   self.dset.assign_coords(latitude=(('y','x'),mgrid[0]))
+                   self.dset.assign_coords(latitude=(('y','x'),mgrid[1]))
 
             self.dset = self.dset.reset_coords()
             self.dset = self.dset.set_coords(['time','latitude','longitude'])
