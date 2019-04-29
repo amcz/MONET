@@ -1,6 +1,5 @@
 #volcat_monet.py
-#/hysplit-users/allisonr/VOLCANO/
-#My attempt at creating a reader for VOLCAT data using xarray
+#Reader for VOLCAT data using xarray
 import xarray as xr
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
