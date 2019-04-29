@@ -1,3 +1,4 @@
+import os
 
 def findcycles(dstart, dend, metdata):
     """dstart : datetime object. start date
