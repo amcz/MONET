@@ -12,29 +12,36 @@ import sys, getopt
 from operator import itemgetter
 #import codecs
 import os.path
-#from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 
-##Collection of useful function
-
-
-##removefromset
-
-##autocorr - computes autocorrelation. 
-  
-##um2phi - converts grain size in microns to grain size in phi
-
-##phi2um - converts phi to microns
-
-##cat - concatenates files
-
-##isnan - finds nans
-
+#####Collection of useful functions#####
 ##crop_contour_plot(x,y,z, xr=[], yr=[]):
-
 ##cropra(dra , missing, maskthera=0, crop=1, datara=[], buffer=0):
-
-##histoplot 
+##histoplot - creates 1d histogram
+##roundtime - rounds to the nearest hour (up for 30 min)
+##emap 
+##lastday - given a date, returns last day of the month
+##list2str - converts list to string
+##logscale_fmt
+##dra2list - turns 2d arrays into a list of tuples with missing values removed
+##removefromset(x,y,mv) - removes data points that equal mv
+##crop2dra - crops 2d arrays 
+##autocorr - computes autocorrelation
+##um2phi - converts grain size in microns to grain size in phi
+##phi2um - converts phi to microns
+##cat - concatenates files
+##nan_finder - finds nans
+##set_date_axis
+##sortxy
+##sortxyz
+##spline_v
+##H2P(H) - convert height to pressure. 
+##P2H(P) - convert pressure to height
+##sphu2relh(sphu, p , t): convert specific humidity to relative humidity
+##sat_vap_density(t, type=1): Calculates sat. vapor density given a temp
+##relh2sphu(relh, h , t): convert relative humidity to specific humidity
+##is_number(s)
+##addticks
 
 def crop_contour_plot(x,y,z, xr=[], yr=[]):
     """crops 2d arrays so that x data lies in range given by xr and y
@@ -58,8 +65,6 @@ def crop_contour_plot(x,y,z, xr=[], yr=[]):
         y=y[min_xi:max_xi,]
         z=z[min_xi:max_xi,]
     return x , y , z 
-
-
 
 def cropra(dra , missing, maskthera=0, crop=1, datara=[], buffer=0):
     """Crops a 2d array to  rectangular area which contains all valid values."""
@@ -124,7 +129,6 @@ def histoplot(x, bins=100, missing=(), pdf=1 , cdf=0, clr='b' , transparency=1, 
     xstats['median'] = np.median(x) 
     return xstats
 
-
 def roundtime(dtime):
     """rounds time to nearest hour. Rounds up for 30 minutes"""
     if dtime.minute >= 30:
@@ -134,7 +138,6 @@ def roundtime(dtime):
 
     temptime = dtime.replace(minute=0) + dt
     return temptime   
-
 
 def emap(quantity, lat , lon, range=[], clevs=[], pclrs=[], type='mesh', MISSING=0, title=''):
     #rcParams['figure.figsize']=8, 10
@@ -200,13 +203,11 @@ def emap(quantity, lat , lon, range=[], clevs=[], pclrs=[], type='mesh', MISSING
        plt.title(title)
     return map
 
-
 def lastday(date):
     """given a date, returns date of last day in that month"""
     dtest = datetime.datetime(date.year, date.month+1, 1, 0)
     dtest = dtest - datetime.timedelta(days=1)
     return(dtest) 
-
 
 def list2str(lst, sep=', ' ):
     """converts a list to a string"""
@@ -304,7 +305,6 @@ def autocorr(x, t, n=10, mv=''):
         nlist.append(npts)
     return rt, tlist , nlist
 
-
 def um2phi(um):
     """converts grain size in phi to microns"""
     """phi = log_2(d/do) where do-1mm"""
@@ -334,7 +334,6 @@ def cat(infiles, outfile):
     return success
 
 def nan_finder(y):
-
     return np.isnan(y), lambda z: z.nonzero()[0]
          
 def set_date_axis(ax, dates):
@@ -416,11 +415,6 @@ def spline_v(xra , yra , k=1):
         outra.append(f)
         i+=1
     return  outra
-
-    
-
-
-
 
 def H2P(H):
     """convert height to pressure. If H in meters, returns P in pascals"""

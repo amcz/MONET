@@ -13,31 +13,9 @@ import pandas as pd
 def open_dataset(fname):
       print(fname)
       dset = xr.open_dataset(fname,mask_and_scale=False,decode_times=False)
-      #dset = _get_latlon(dset)
+      dset = _get_latlon(dset)
       #dset = _get_time(dset)
       #print(dset.latitude.scale_factor)
-      
-      # AMC added block to drop un-needed data arrays
-      keeplist = ['pixel_latitude','pixel_longitude',
-                  'top_height','mass_loading', 'effective_radius']         
-      varnames = list(dset.data_vars)
-      for name in varnames:
-         #print('testing', name)
-          drp=True
-          for kp in keeplist:
-              if kp in name:
-                 drp=False 
-          if drp:
-             dset = dset.drop(name)
-
-      # AMC added to rename to x and y.
-      # not sure which should be x vs y?
-      dset = dset.rename({'lines':'x', 'elements':'y'})
-      # AMC added  lat and lon coordinates
-      lat = dset.pixel_latitude[:,:] * dset.pixel_latitude.scale_factor
-      lon = dset.pixel_longitude[:,:] * dset.pixel_longitude.scale_factor
-      dset = dset.assign_coords(longitude=(('y','x'), lon))
-      dset = dset.assign_coords(latitude=(('y','x'), lat))
       return dset
 
 def open_mfdataset(fname):
@@ -51,29 +29,27 @@ def open_mfdataset(fname):
             das.append(open_dataset(i))
       dset = xr.concat(das,dim='time') 
       #print(dset.latitude.scale_factor)
-      #dset = _get_latlon(dset)
+      dset = _get_latlon(dset)
       return dset
 
 def _get_time(dset):
       import pandas as pd
       test = str(dset.Image_Date)[1:] + str(dset.Image_Time)
       time = pd.to_datetime(test,format='%y%j%H%M%S')
-      dset['time'] = time
       dset = dset.set_coords(['time'])
+      dset['time'] = time
       dset = dset.expand_dims(dim='time')
       #dset.dims['time'] = time
       return dset
 
-def get_latlon(dset):
-      lat = dset.pixel_latitude[:,:] * dset.pixel_latitude.scale_factor
-      lon = dset.pixel_longitude[:,:] * dset.pixel_longitude.scale_factor
+def _get_latlon(dset):
       dset = dset.rename({'pixel_latitude':'latitude'})
       dset = dset.rename({'pixel_longitude':'longitude'})
       dset = dset.set_coords(['latitude','longitude'])
-      dset.latitude.load()
-      dset.longitude.load()
-      dset.coords['latitude'][:] = lat
-      dset.coords['longitude'][:] = lon
+      lat = dset.latitude[:,:] * dset.latitude.scale_factor
+      lon = dset.longitude[:,:] * dset.longitude.scale_factor
+      dset['latitude'] = lat
+      dset['longitude'] = lon
       return dset
                   
 def get_height(dset):      
@@ -138,7 +114,7 @@ def plot_mass(dset):
       lon = dset.pixel_longitude[:,:]*dset.pixel_longitude.scale_factor
       #lat=dset.latitude
       #lon=dset.longitude
-      masked_mass=get_mass_loading(dset)
+      masked_mass=get_mass(dset)
       m=plt.axes(projection=ccrs.PlateCarree())
       m.add_feature(cfeat.LAND)
       m.add_feature(cfeat.COASTLINE)
@@ -146,4 +122,4 @@ def plot_mass(dset):
       plt.pcolormesh( lon, lat, masked_mass, transform=ccrs.PlateCarree())
       plt.colorbar()
       plt.title('Ash mass loading (g/m^2)')
-      plt.show()
+      pltshow()

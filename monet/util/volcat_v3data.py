@@ -21,13 +21,9 @@ class VolcatHDF(object):
             self.mass=[]
             self.dset=[]
             self.get_data(verbose=verbose)
-            #self.rval=[]
-            #self.mval=[]
-            #self.get_latlon
-            #self.hval=[]
 
       def get_data(self, verbose=1):
-            """retrieves data from VOLCAT files."""
+            """retrieves data from individual VOLCAT files."""
             self.dset = xr.open_dataset(self.fname,mask_and_scale=False,decode_times=False)
             self.version=self.dset.attrs['Default_Name_ash_ret']
             self.height = self.dset[self.version + '_ash_top_height'][:,:]
@@ -42,6 +38,7 @@ class VolcatHDF(object):
                print(self.dset.attrs)
                print('VARIABLES')
                print(self.dset)
+
 
       def get_latlon(self):
             return  self.lat, self.lon
