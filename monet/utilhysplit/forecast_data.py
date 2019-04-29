@@ -1,8 +1,7 @@
 import os
 
-def findcycles(dstart, dend, metdata):
+def findcycles_forecast(dstart, metdata):
     """dstart : datetime object. start date
-       dend : datetime, end date (not used)
        metdata : str 
        GFS, GFS0p5, GFS0p25, NAM 12 km, NAMAK, NAMHI 
     """
@@ -11,27 +10,22 @@ def findcycles(dstart, dend, metdata):
     ctimes=[0,6,12,18]
     metdirlist = []
     metfilelist=[]
+    days = [""]
     if(metdata=="GFS"):
        meta = "gfsa"
        met = "gfsf"
-       days=[""]
     elif(metdata=="GFS0p5"):
        met = "gfs0p5f"
-       days=[""]
     elif(metdata=="GFS0p25"):
        met = "gfs0p25"
-       days=["000","024","048","072","096","120","144","168"]
     elif(metdata=="NAM 12 km"):
        met = "namf"
-       days=[""]
     elif(metdata=="NAMAK"):
        met = "namsf.AK"
        meta = "namsa.AK"
-       days=[""]
     elif(metdata=="NAMHI"):
        met = "namsf.HI"
        meta = "namsa.HI"
-       days=[""]
     metdir1=FCTDIR + '/' + dstart.strftime("%Y%m%d") + '/'
     #print('<br>' + metdir1)
     cyclename = 'None'
@@ -48,3 +42,33 @@ def findcycles(dstart, dend, metdata):
         metdirlist.append(metdir1)         
     return metdirlist, metfilelist
 
+def findcycles_archive(dstart, dend, metdata, direction):
+     """dstart : datetime object start date
+         dend : datetime object end date
+         metdata : string : GDAS0p5, GDAS1
+         direction: string : Forward, Back
+    """
+     from datetime import timedelta as td
+     DIR='/pub/archives/'
+     metdirlist = []
+     metfilelist=[]
+     datelist = []
+     if (direction == 'Forward'):
+         ndays = dend.day - dstart.day
+         for x in range (0, ndays + 1):
+             datelist.append(dstart + td(days = x))
+     elif (direction == 'Back'):
+         ndays = dstart.day - dend.day
+         for  x in range (0, ndays + 1):
+             datelist.append(dstart - td(days = x))
+     if (metdata=="GDAS0p5"):
+         met = "gdas0p5"
+     elif (metdata=="GDAS1"):
+         met = "gdas1"
+     metdir1=DIR + met + '/'
+     y = 0
+     while y < len(datelist):
+         metfilelist.append(datelist[y].strftime("%Y%m%d") + '_' + met)         
+         metdirlist.append(metdir1)
+         y += 1
+     return metdirlist, metfilelist
