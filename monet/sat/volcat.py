@@ -1,100 +1,125 @@
-#!/n-home/alicec/anaconda/bin/python
-# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
-from math import *
-#import sys 
-#from scipy.io import netcdf
-#from netCDF4 import Dataset
-#from pylab import *
+#volcat.py
+#/hysplit-users/allisonr/VOLCANO/
+#My attempt at creating a reader for VOLCAT data using xarray
+#For use with MONET
+import xarray as xr
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeat
 import numpy as np
 import numpy.ma as ma
-import matplotlib.pyplot as plt
-#import string
-#import datetime
-#from matplotlib.path import Path
-#import map_projections
-#from plume_models import usgstable
-#from meteorology import *
-#from mytools import emap
-#import pandas as pd
-#from pyhysplit.netcdf.netcdf import NCfile
-from pyhdf.SD import SD, SDC
-#from pyhdf.HDF import *
-#from pyhdf.VS import *
+import pandas as pd
 
+def open_dataset(fname):
+      print(fname)
+      dset = xr.open_dataset(fname,mask_and_scale=False,decode_times=False)
+      dset = _get_latlon(dset)
+      #dset = _get_time(dset)
+      #print(dset.latitude.scale_factor)
+      return dset
 
-#ModisHDF class -  gets satellite retrieval information from HDF file.
+def open_mfdataset(fname):
+      #print(fname)
+      #dset = xr.open_mfdataset(fname,concat_dim='time',decode_times=False,mask_and_scale=False)
+      from glob import glob
+      from numpy import sort
+      files = sort(glob(fname))
+      das = []
+      for i in files:
+            das.append(open_dataset(i))
+      dset = xr.concat(das,dim='time') 
+      #print(dset.latitude.scale_factor)
+      dset = _get_latlon(dset)
+      return dset
 
+def _get_time(dset):
+      import pandas as pd
+      test = str(dset.Image_Date)[1:] + str(dset.Image_Time)
+      time = pd.to_datetime(test,format='%y%j%H%M%S')
+      dset = dset.set_coords(['time'])
+      dset['time'] = time
+      dset = dset.expand_dims(dim='time')
+      #dset.dims['time'] = time
+      return dset
 
-class VolcatHDF(object):
-      """reads data from a hdf file"""
-      def __init__(self, fname, verbose=0, datatype='532'):
-            self.fname = fname
-            self.missing = -999  
-            self.version='vcat_ashprop_13_15_16'
-            #self.version='volcld_ret_14_15_16'
-            self.lat=[]
-            self.lon=[]
-            self.height=[]
-            self.radisu=[]
-            self.mass=[]
-            self.get_sd(verbose=verbose)
+def _get_latlon(dset):
+      dset = dset.rename({'pixel_latitude':'latitude'})
+      dset = dset.rename({'pixel_longitude':'longitude'})
+      dset = dset.set_coords(['latitude','longitude'])
+      lat = dset.latitude[:,:] * dset.latitude.scale_factor
+      lon = dset.longitude[:,:] * dset.longitude.scale_factor
+      dset['latitude'] = lat
+      dset['longitude'] = lon
+      return dset
+                  
+def get_height(dset):      
+      """Returns array with retrieved height of the highest layer of ash."""
+      """Default units are km above sea-level"""
+      var_header = dset.attrs['Default_Name_ash_ret']
+      h_missing = dset[var_header + '_ash_top_height']._FillValue
+      masked_height = ma.masked_equal(dset[var_header + '_ash_top_height'],h_missing)
+      return masked_height
 
-      def get_sd(self, verbose=1):
-            """retrieves data from SD (scientific data) set."""
-            dset = SD(self.fname,SDC.READ)
-            a = dset.datasets()
-            self.attributes  = dset.attributes()
-            if verbose:
-               print('ATTRIBUTES')
-               print(self.attributes)
-               print(a)
-               for key in self.attributes.keys():
-                    print(key) 
-                    #temp = dset.select(key)
-                    #print temp.info()
-            lat = dset.select('pixel_latitude')
-            lon = dset.select('pixel_longitude')
-            self.lat = lat.attributes()['scale_factor'] * lat[:,:]
-            self.lon = lon.attributes()['scale_factor'] * lon[:,:]
+def get_radius(dset):
+      """Returns 2d array of ash effective radius"""
+      """Default units are micrometer"""
+      var_header = dset.attrs['Default_Name_ash_ret']
+      r_missing = dset[var_header + '_ash_effective_radius']._FillValue
+      masked_radius = ma.masked_equal(dset[var_header + '_ash_effective_radius'],r_missing)
+      return masked_radius
 
-            self.height = dset.select(self.version + '_ash_top_height')[:,:]
-            self.radius = dset.select(self.version + '_ash_effective_radius')[:,:]
-            self.mass = dset.select(self.version + '_ash_mass_loading')[:,:]
-            return 1
+def get_mass_loading(dset):
+      """Returns 2d array of ash effective radius"""
+      """Default units are micrometer"""
+      var_header = dset.attrs['Default_Name_ash_ret']
+      m_missing = dset[var_header + '_ash_mass_loading']._FillValue
+      masked_mass = ma.masked_equal(dset[var_header + '_ash_mass_loading'],m_missing)
+      return masked_mass
 
-      def get_radius(self, units='um'):
-            rval = ma.masked_equal(self.radius[:,:], self.missing)
-            return rval
-        
-      def get_mass_loading(self, units='g/m2'):
-            rval = ma.masked_equal(self.mass[:,:], self.missing)
-            return rval
-    
-      def get_latlon(self):
-            """Returns 2d arrays of latitude and longitude"""
-            return  self.lat, self.lon
+def plot_height(dset):
+       fig = plt.figure('Ash_Top_Height')
+       #lat=dset.latitude
+       #lon=dset.longitude
+       lat = dset.pixel_latitude[:,:] * dset.pixel_latitude.scale_factor
+       lon = dset.pixel_longitude[:,:]*dset.pixel_longitude.scale_factor
+       masked_height=get_height(dset)
+       m = plt.axes(projection=ccrs.PlateCarree())
+       m.add_feature(cfeat.LAND)
+       m.add_feature(cfeat.COASTLINE)
+       m.add_feature(cfeat.BORDERS)
+       plt.pcolormesh( lon, lat, masked_height, transform=ccrs.PlateCarree())
+       plt.colorbar()
+       plt.title('Ash Top Height (km)')
+       plt.show()
 
-      def get_height(self, units='km'):
-            """Returns array with retrieved height of the highest layer of ash."""
-            """ Default units is km above sea-level"""
-            rval = ma.masked_equal(self.height[:,:], self.missing)
-            return rval
+def plot_radius(dset):
+      fig = plt.figure('Ash_Effective_Radius')
+      lat = dset.pixel_latitude[:,:] * dset.pixel_latitude.scale_factor
+      lon = dset.pixel_longitude[:,:]*dset.pixel_longitude.scale_factor
+      #lat=dset.latitude
+      #lon=dset.longitude
+      masked_radius=get_radius(dset)
+      m=plt.axes(projection=ccrs.PlateCarree())
+      m.add_feature(cfeat.LAND)
+      m.add_feature(cfeat.COASTLINE)
+      m.add_feature(cfeat.BORDERS)
+      plt.pcolormesh( lon, lat, masked_radius, transform=ccrs.PlateCarree())
+      plt.colorbar()
+      plt.title('Ash effective radius (um)')
+      plt.show()
 
-      def quickplot(self): 
-          fig = plt.figure(1)
-          val=self.get_height()
-          lat, lon = self.get_latlon()
-          cb = plt.pcolormesh(lon,lat, val)
-          plt.colorbar(cb)
-          plt.title('height')
-          fig = plt.figure(2)
-          val=self.get_mass_loading()
-          cb = plt.pcolormesh(lon,lat, val)
-          plt.colorbar(cb)
-          plt.title('mass')
-          plt.show()
-
-
-
-
-      
+def plot_mass(dset):
+      fig = plt.figure('Ash_Mass_Loading')
+      lat = dset.pixel_latitude[:,:] * dset.pixel_latitude.scale_factor
+      lon = dset.pixel_longitude[:,:]*dset.pixel_longitude.scale_factor
+      #lat=dset.latitude
+      #lon=dset.longitude
+      masked_mass=get_mass(dset)
+      m=plt.axes(projection=ccrs.PlateCarree())
+      m.add_feature(cfeat.LAND)
+      m.add_feature(cfeat.COASTLINE)
+      m.add_feature(cfeat.BORDERS)
+      plt.pcolormesh( lon, lat, masked_mass, transform=ccrs.PlateCarree())
+      plt.colorbar()
+      plt.title('Ash mass loading (g/m^2)')
+      pltshow()

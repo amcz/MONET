@@ -1,5 +1,5 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
-
+#Calculates mass eruption rate in a variety of ways
 #import matplotlib.pyplot  as plt
 #from math import *
 
