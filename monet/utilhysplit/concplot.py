@@ -17,6 +17,7 @@ def sum_species(dset, plist, time, z, fillz=False):
     time : time
     fillz : boolean
     """
+    #print('HERE', plist)
     returnra = []
     iii=0
     for species in plist:
@@ -28,6 +29,8 @@ def sum_species(dset, plist, time, z, fillz=False):
             returnra = val2d
         else:
             returnra += val2d
+        iii+=1
+    #    print(returnra)
     return returnra
 
 
@@ -43,12 +46,9 @@ class ConcPlot(object):
        lons = np.array(self.hxr.coords['longitude'])
        self.latitude =  lats[0] 
        self.longitude = np.transpose(lons)[0]
-       alist = self.hxr.data_vars.keys()
-       print('HERE')
-       print(list(alist))
-       alist = list(alist)
-       temp = self.hxr[alist[0]] 
-      
+       # alist = self.hxr.data_vars.keys()
+       # alist = list(alist) 
+        
 
     def getra(self, lev, tm, splist=None, fillz=False):
         """
@@ -57,8 +57,11 @@ class ConcPlot(object):
  
         currently these are the indices.
         """
-        if not splist: splist = list(self.hxr.data_vars(keys())
-        val2d = sum_species(self.hxr, splist, time=tm,
+        time = self.hxr.coords['time'][0]
+        print(type(time))
+           
+        if not splist: splist = list(self.hxr.data_vars.keys())
+        val2d = sum_species(self.hxr, splist, time=tm,\
                                     z=lev, fillz=fillz)
         return val2d
 
@@ -70,16 +73,18 @@ class ConcPlot(object):
         if None will sum over all species present in the file.
         """
         contour = False
-        if not splist: splist = list(self.hxr.data_vars(keys())
+        if not splist: splist = list(self.hxr.data_vars.keys())
         #hxr = hysplit.open_dataset(fname, drange=[d1,d2])
         #print('DATASET ************************')
         #print(hxr)
         #print('PAR1 ************************')
         #print(hxr['par1'])
+        print(splist)
         for lev in range(0,self.hxr.dims['z']): 
             for tm in range(0,self.hxr.dims['time']): 
-                val2d = sum_species(self.hxr, splist, time=tm,
-                                    z=lev, fillz=fillz)
+                val2d = np.array(self.hxr.p006[tm,lev,:,:])
+                #val2d = sum_species(self.hxr, splist, time=tm,
+                #                    z=lev, fillz=fillz)
                 yield lev, tm, val2d
 
     def plotall(self, contour=False):
