@@ -90,4 +90,26 @@ def make_tcontrol(cname):
     control.write()
 #make_tcontrol('TEST')  
 
+def make_traj_control(pid, wdir, simulation_start, runtime, lat, lon, height, mdir, mfiles):
+    """ pid : string (process id)
+         wdir : string : directory where control file is to be written.
+         simulation_start : datetime object
+         runtime : duration of simulation
+         lat, lon : start lat and lon
+         height : height(s) of trajectory start
+         mdir : met directories
+         mfiles : met files"""
+    control = HycsControl(fname=wdir + 'CONTROL.' + str(pid),rtype = 'trajectory')
+    # simulation start date
+    control.add_sdate(simulation_start)
+    # set the duration of the simulation (hours)
+    control.run_duration = runtime
+    # set location of volcano
+    control.add_location(latlon=(lat, lon), alt=vent_ht) 
+    control.add_location(latlon=(lat, lon), alt=plume_ht) 
+    control.outfile = 'tdump.'+str(pid)
+    # add met files
+    for metdir, metfile in zip(mdir,mfiles):
+        control.add_metfile(metdir, metfile)
+    control.write()
 

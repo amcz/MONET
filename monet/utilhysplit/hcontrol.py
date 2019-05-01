@@ -1,6 +1,6 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 import datetime
-
+from datetime import timedelta as td
 
 # from pylab import matrix
 """
@@ -670,10 +670,10 @@ class ControlLoc():
         returnstr += "{:.4f}".format(self.latlon[1])
         returnstr += spc
         returnstr += "{:.1f}".format(self.alt)
-        if self.rate != -999:
-            returnstr += spc
-            returnstr += "{:.0f}".format(self.rate)
-        if self.rate != -999 and self.area != -999:
+        if self.rate != -999 and self.rate != False:
+                returnstr += spc
+                returnstr += "{:.0f}".format(self.rate)
+        if self.rate != -999 and self.area != -999 and self.rate != False:
             returnstr += spc
             returnstr += "{:.2E}".format(self.area)
         return returnstr
@@ -823,19 +823,27 @@ class HycsControl():
         """writes CONTROL file to text file
            self.wdir + self.fname
         """
+        if annotate:
+            print('WRITING CONTROL FILE ', self.wdir + self.fname)
         note = ''
-        sp28 = ' ' * 28
+        sp28 = ' ' * 30
         with open(self.wdir + self.fname, "w") as fid:
-            fid.write(self.date.strftime("%y %m %d %H"))
+            #Determining which hour for start time based on minutes
+            #if (self.date.minute < 30):
+            #    fid.write(self.date.strftime("%y %m %d %H"))
+            #elif (self.date.minute > 30):
+            #    self.date = (self.date + td(hours=1))
+            #    fid.write(self.date.strftime("%y %m %d %H"))
+            fid.write(self.date.strftime("%y %m %d %H %M"))
             if annotate:
-                note = ' ' * 18 + '#Start date of simulation'
+                note = ' ' * 50 + '#Start date of simulation'
             fid.write(note + '\n')
             if annotate:
-                note = ' ' * 28 + '#Number of source locations'
+                note = ' ' * 65 + '#Number of source locations'
             fid.write(str(self.nlocs) + note + "\n")
             iii = 0
             if annotate:
-                note = ' ' * 15 + '#Lat Lon Altitude'
+                note = ' ' * 29 + '#Lat, Lon, Altitude'
             for source in self.locs:
                 fid.write(str(source))
                 if iii > 0:
@@ -843,37 +851,44 @@ class HycsControl():
                 fid.write(note)
                 iii += 1
                 fid.write('\n')
-
             if annotate:
-                note = sp28 + '#Duration of run'
+                note = ' ' * 65 + '#Duration of run'
             fid.write(str(int(self.run_duration)) + note + '\n')
             if annotate:
-                note = sp28 + '#Vertical Motion'
+                note = ' ' * 67 + '#Vertical Motion'
             fid.write(str(self.vertical_motion) + note + '\n')
             if annotate:
-                note = sp28 + '#Top of Model Domain'
+                note = ' ' * 57 + '#Top of Model Domain'
             fid.write(str(self.ztop) + note + '\n')
             if annotate:
-                note = sp28 + '#Number of Meteorological Data Files'
-            fid.write(str(self.num_met) + note + "\n")
+                note = ' ' * 67 + '#Number of Meteorological Data Files'
+            fid.write(str(self.num_met) + note + '\n')
             iii = 0
             for met in self.metfiles:
                 if annotate:
-                    note = '  #Meteorological Data Directory'
+                    note = ' ' * 32 + '#Meteorological Data Directory'
                 if iii > 0:
                     note = ''
-                fid.write(self.metdirs[iii])
-                fid.write(note + "\n")
+                fid.write(self.metdirs[iii] + '\n')
+                #fid.write(self.metdirs[iii] + note + "\n")
+                #fid.write(note + "\n")
                 if annotate:
-                    note = '  #Meteorological Data Filename'
+                    note = ' ' * 38 + '#Meteorological Data Filename'
                 if iii > 0:
                     note = ''
-                fid.write(met)
-                fid.write(note + "\n")
+                fid.write(met + '\n')
+                #fid.write(met + note + "\n")
+                #fid.write(note + "\n")
                 iii += 1
 
             if self.rtype == 'trajectory':
-                fid.write(self.outdir + "\n")
+                #if annotate:
+                 #   note = ' #Trajectory Output Directory'
+                #fid.write(self.outdir + note + "\n")
+                fid.write(self.outdir + '\n')
+                #if annotate:
+                 #   note = ' ' * 23 + '#Trajectory Output File'
+                #fid.write(self.outfile + note)
                 fid.write(self.outfile)
                 return False
 
