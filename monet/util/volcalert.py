@@ -1,4 +1,4 @@
-#read_volcat_alert.py
+#volcat_alert.py
 #Reads XML alert files
 #Extracts: date, time, lat, lon, volcano name
 #max height (km), max height (ft), total mass (Tg), median effective radius (um)
@@ -22,10 +22,10 @@ def get_alert_values(root):
     status = root.alert.status.attrib.get('value')
     confidence = root.alert.confidence.attrib.get('value')
     method = root.alert.method.attrib.get('value')
-    lat_rc = root.alert.lat_rc.attrib.get('value')
-    lon_rc = root.alert.lon_rc.attrib.get('value')
+    lat_rc = float(root.alert.lat_rc.attrib.get('value'))
+    lon_rc = float(root.alert.lon_rc.attrib.get('value'))
     date_time = root.alert.object_date_time.attrib.get('value') #Put into datetime object
-    date_time = datetime.strptime(date_time, '%Y-%m-%d %H:%M:%S').replace(second = 0)  #Strips seconds, leaving year, month, day, hour, minute as datetime object
+    date_time = datetime.strptime(date_time, '%Y-%m-%d %H:%M:%S').replace(second = 0)
     return alert_header, alert_type, status, confidence, method, lat_rc, lon_rc, date_time
 
 #Extracting array of nearby possible volcanoes

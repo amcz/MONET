@@ -1,0 +1,3 @@
+#read_usgstable.py
+#Reads in csv file containing volcano information
+import csv
