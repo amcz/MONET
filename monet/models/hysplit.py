@@ -1,4 +1,4 @@
-""" HYPSLIT MODEL READER """
+#""" HYPSLIT MODEL READER """
 import datetime
 import pandas as pd
 import xarray as xr
@@ -17,19 +17,19 @@ def _hysplit_latlon_grid_from_dataset(ds):
     )
     return p4
 
-<<<<<<< HEAD
-=======
+#<<<<<<< HEAD
+#=======
 
->>>>>>> develop
+#>>>>>>> develop
 def get_hysplit_latlon_pyresample_area_def(ds, proj4_srs):
     from pyresample import geometry
 
     return geometry.SwathDefinition(lons=ds.longitude.values, lats=ds.latitude.values)
 
-<<<<<<< HEAD
-=======
+#<<<<<<< HEAD
+#=======
 
->>>>>>> develop
+#>>>>>>> develop
 def check_drange(drange, pdate1, pdate2, verbose):
     """
     drange : list of two datetimes
@@ -91,11 +91,11 @@ def open_dataset(fname, drange=None, verbose=False):
     dset = binfile.dset
     # return dset
     # get the grid information
-<<<<<<< HEAD
+#<<<<<<< HEAD
     ## May not need the proj4 definitions now that lat lon defined properly.
-=======
+#=======
     # May not need the proj4 definitions now that lat lon defined properly.
->>>>>>> develop
+#>>>>>>> develop
     p4 = _hysplit_latlon_grid_from_dataset(dset)
     swath = get_hysplit_latlon_pyresample_area_def(dset, p4)
 
