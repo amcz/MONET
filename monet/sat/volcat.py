@@ -16,6 +16,7 @@ def open_dataset(fname):
       dset = _get_latlon(dset)
       #dset = _get_time(dset)
       #print(dset.latitude.scale_factor)
+      dset = dset.rename({"lines":'y',"elements":'x'})
       return dset
 
 def open_mfdataset(fname):
@@ -28,8 +29,8 @@ def open_mfdataset(fname):
       for i in files:
             das.append(open_dataset(i))
       dset = xr.concat(das,dim='time') 
-      #print(dset.latitude.scale_factor)
       dset = _get_latlon(dset)
+      dset = dset.rename({"lines":'y',"elements":'x'})
       return dset
 
 def _get_time(dset):
