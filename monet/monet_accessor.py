@@ -303,7 +303,7 @@ class MONETAccessor(object):
             figsize = _dynamic_fig_size(self.obj)
             map_kwarg['figsize'] = figsize
         ax = draw_map(**map_kwarg)
-        self.obj.plot(
+        _rename_to_monet_latlon(self.obj).plot(
             x='longitude',
             y='latitude',
             ax=ax,
@@ -590,10 +590,10 @@ class MONETAccessorDataset(object):
         try:
             if isinstance(data, xr.DataArray):
                 data = rename_latlon(data)
-                self._remap_xesmf_dataarray(data, **kwargs)
+                self._remap_nearest_dataarray(data, radius_of_influence=radius_of_influence)
             elif isinstance(data, xr.Dataset):
                 data = rename_latlon(data)
-                self._remap_xesmf_dataset(data, **kwargs)
+                self._remap_nearest_dataset(data, radius_of_influence=radius_of_influence)
             else:
                 raise TypeError
         except TypeError:
