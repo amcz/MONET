@@ -12,6 +12,26 @@ from .epa_util import read_monitor_file
 pbar = ProgressBar()
 pbar.register()
 
+def add_data(dates,
+                 param=None,
+                 daily=False,
+                 network=None,
+                 download=False,
+                 local=False,
+                 wide_fmt=True):
+    from ..util import long_to_wide
+    a = AQS()
+    df = a.add_data(dates,
+                 param=param,
+                 daily=daily,
+                 network=network,
+                 download=download,
+                 local=local)
+    
+    if wide_fmt:
+        return long_to_wide(df)
+    else:
+        return df
 
 class AQS(object):
     """Short summary.
@@ -370,7 +390,10 @@ class AQS(object):
                 [network])].drop_duplicates(subset=['siteid'])
         else:
             monitors = self.monitor_df.drop_duplicates(subset=['siteid'])
-        self.df = pd.merge(self.df, monitors, on=['siteid'], how='left')
+        #AMC - merging only on siteid was causing latitude_x latitude_y to be
+        #created.
+        mlist=['siteid','latitude','longitude']
+        self.df = pd.merge(self.df, monitors, on=mlist, how='left')
         if daily:
             self.df['time'] = self.df.time_local - pd.to_timedelta(
                 self.df.gmt_offset, unit='H')
