@@ -2,14 +2,14 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 from math import *
 import sys 
-from scipy.io import netcdf
-from pylab import *
+#from scipy.io import netcdf
+#from pylab import *
 import numpy as np
 import matplotlib.pyplot as plt
 import string
 import datetime
 #import shapely.geometry as sgeo
-from hysplit import *
+#from hysplit import *
 import itertools
 
 """
@@ -48,8 +48,8 @@ def match_ra(ra1, lat1, lon1, ra2, lat2, lon2, missing_value=0, verbose=1):
     """
     latlongrid=[]
     if verbose==1: 
-        print 'RA1 ' , ra1.shape , '\n LAT1 ' , lat1.shape , '\n LON1 ', lon1.shape
-        print 'RA2 ' , ra2.shape , '\n LAT2 ' , lat2.shape , '\n LON2 ', lon2.shape
+        print('RA1 ' , ra1.shape , '\n LAT1 ' , lat1.shape , '\n LON1 ', lon1.shape)
+        print('RA2 ' , ra2.shape , '\n LAT2 ' , lat2.shape , '\n LON2 ', lon2.shape)
     ##check to make shapes of input arrays are the same.
     if ra1.shape == lat1.shape and ra1.shape == lat1.shape and  \
        ra2.shape == lat2.shape and ra2.shape == lat2.shape:
@@ -61,17 +61,17 @@ def match_ra(ra1, lat1, lon1, ra2, lat2, lon2, missing_value=0, verbose=1):
            lat_space =  round(lat1[1][0] - lat1[0][0], 3)
            lat_space2 = round(lat2[1][0] - lat2[0][0], 3)
            if verbose ==1:
-              print 'Lat spacing', lat_space , lat_space2
+              print('Lat spacing', lat_space , lat_space2)
            #print lat1 
            if lat_space == 0:
-              print 'WARNING. latitude spacing is zero!'
+              print('WARNING. latitude spacing is zero!')
            if lat_space != lat_space2:
-              print 'WARNING: spacing between two arrays is not the same'
+              print('WARNING: spacing between two arrays is not the same')
            minlat = np.amin(np.append(lat1, lat2))
            maxlat = np.amax(np.append(lat1, lat2))
            if verbose == 1:
-               print 'Min latitude ' , minlat , ' ' , np.amin(lat1),  ' ' , np.amin(lat2) 
-               print 'Max latitude ' ,  maxlat, ' ' , np.amax(lat1),  ' ' , np.amax(lat2)
+               print('Min latitude ' , minlat , ' ' , np.amin(lat1),  ' ' , np.amin(lat2)) 
+               print('Max latitude ' ,  maxlat, ' ' , np.amax(lat1),  ' ' , np.amax(lat2))
            latlist = np.arange(minlat, maxlat+lat_space, lat_space)
  
 
@@ -94,11 +94,11 @@ def match_ra(ra1, lat1, lon1, ra2, lat2, lon2, missing_value=0, verbose=1):
            tempra = tempra + missing_value
            for x in range(la2): 
                if verbose:
-                  print 'la2', x                                   
+                  print('la2', x)                                   
                ra2 = np.concatenate((ra2, tempra), axis=0)        
            for x in range(la1):
                if verbose:
-                  print 'la1' , x                                   
+                  print('la1' , x)                                   
                ra2 = np.concatenate((tempra, ra2), axis=0)
            #print 'RA2 \n' , ra2 
 
@@ -107,16 +107,16 @@ def match_ra(ra1, lat1, lon1, ra2, lat2, lon2, missing_value=0, verbose=1):
            lon_space =  round(lon1[0][1] - lon1[0][0] , 3)
            lon_space2 = round(lon2[0][1] - lon2[0][0] , 3)
            if verbose ==1:
-              print 'LON space' , lon_space , lon_space2
+              print('LON space' , lon_space , lon_space2)
            if lon_space == 0:
-              print 'WARNING. longitude spacing is zero!'
+              print('WARNING. longitude spacing is zero!')
            if lon_space != lon_space2:
-              print 'WARNING: longitude spacing for two arrays is not the same.'
+              print('WARNING: longitude spacing for two arrays is not the same.')
            minlon = np.amin(np.append(lon1, lon2))
            maxlon = np.amax(np.append(lon1, lon2))
            lonlist = np.arange(minlon, maxlon+lon_space, lon_space)
            if verbose ==1:
-              print 'Min longitude ' , minlon , 'Max longitude ', maxlon
+              print('Min longitude ' , minlon , 'Max longitude ', maxlon)
       
            ##add padding to ra1 ################
            la1 = int(round((np.amin(lon1)-np.amin(lonlist))/lon_space))
@@ -150,9 +150,9 @@ def match_ra(ra1, lat1, lon1, ra2, lat2, lon2, missing_value=0, verbose=1):
            #print latlongrid[1]
  
     else:
-       print "Error: shapes of input arrays are incorrect."
+       print("Error: shapes of input arrays are incorrect.")
     if verbose ==1:
-       print 'Shapes of output arrays ra1, ra2, lat, lon' , ra1.shape, ra2.shape, latlongrid[0].shape, latlongrid[1].shape
+       print('Shapes of output arrays ra1, ra2, lat, lon' , ra1.shape, ra2.shape, latlongrid[0].shape, latlongrid[1].shape)
     return latlongrid , ra1 , ra2
 
 
@@ -168,7 +168,7 @@ def get_area_ra(lat, lon, radius=6378.137):
     lat_space =  lat[1][0] - lat[0][0]
     lon_space =  lon[0][1] - lon[0][0]
     if lat_space == 0 or lon_space==0:
-       print 'WARNING: lat or lon spacing is zero'
+       print('WARNING: lat or lon spacing is zero')
     area = lat_space*d2km * lon_space * d2km * cos(d2r * lat)
     #print 'Area shape', area.shape , lat.shape , np.amin(area) , np.amax(area) 
     return area
@@ -179,28 +179,38 @@ def calc_fss(ra1, ra2, nodata_value='', threshold=0, verbose=0, sn=[0,3]):
       Weather Review, V126 2007..)
 
        sn is the size of the squares to use in number of pixels to a side.
-       default is to use 1, 3, 5, 7, 9 pixels size squares
+       default is to use pixels size squares
    """
    fss_list = []
-   print 'RANGE' , range(sn[0],sn[1])
+   print('RANGE' , list(range(sn[0],sn[1])))
    bigN = ra1.size
+   # print('bigN', bigN)
+  
    for sz in range(sn[0],sn[1]):
-       ijrange = range(-1*sz, sz+1)
+
+       # e.g. for sz=3, ijrange=[-3,-2,-1,0,1,2,3]
+       ijrange = list(range(-1*sz, sz+1))
+       # li will be coordinates of all the points in the ra.
+       # e.g. [(-3,-3), (-3,-2), (-3,-1).....]
        x = itertools.permutations(ijrange+ijrange,2)
        li=[]
        for i  in x:
            li.append(i)
+       # remove duplicates (e.g. (2,2) will be in there twice)
        incrlist=list(set(li))
        square_size = len(incrlist)
-       print 'square size ' , sz*2+1 , square_size
+       print('square size ' , sz*2+1 , square_size)
        icol = ra1.shape[1]
        irow = ra1.shape[0]
        maxrow = irow
        maxcol = icol
-       print ra1.shape , irow , icol
+       print(ra1.shape , irow , icol)
+       # create binary fields
        mra1 = mask_threshold(ra1, threshold=0)
        mra2 = mask_threshold(ra2, threshold=threshold)
-       print 'SUMS' , mra1.sum() , mra2.sum()
+       # total number of above threshold points.
+       print('SUMS' , mra1.sum() , mra2.sum())
+       # create empty arrays of same shape as mra1 and mra2
        list_fractions_1 = np.empty_like(mra1).astype(float)
        list_fractions_2 = np.empty_like(mra1).astype(float)
        for ic in range(0,icol):
@@ -215,18 +225,28 @@ def calc_fss(ra1, ra2, nodata_value='', threshold=0, verbose=0, sn=[0,3]):
                fraction_2 = float(fraction_2) / float(square_size)          
                list_fractions_1[ir][ic] = float(fraction_1)
                list_fractions_2[ir][ic] = float(fraction_2)
+       plot_fractions=False
+       if plot_fractions:
+          fig = plt.figure(1)
+          ax1 = fig.add_subplot(2,1,1) 
+          ax2 = fig.add_subplot(2,1,2) 
+          ax1.imshow(list_fractions_1)
+          ax2.imshow(list_fractions_2)
+          plt.show()
        fbs = np.power(list_fractions_1 - list_fractions_2, 2).sum() / float(bigN)
-       print 'FBS ' , fbs
+       print('FBS ' , fbs)
        fbs_ref = (np.power(list_fractions_1,2).sum() + np.power(list_fractions_2,2).sum() ) / float(bigN)
-       print 'FBS reference' , fbs_ref
+       print('FBS reference' , fbs_ref)
        fss = 1 - (fbs / fbs_ref)
-       print 'FSS ' , fss
+       print('FSS ' , fss)
        fss_list.append((fss, len(incrlist)))
    return fss_list
 
 
 def find_threshold(ra1, ra2, nodata_value=None):
-    """ra1 is the satellite data.
+    """
+       Base threshold on matching number of pixels in observations.
+       ra1 is the satellite data.
        ra2 is model data"""
     mask1 = mask_threshold(ra1, threshold=0)
     #numpixels = mask1.size - mask1.sum()
@@ -243,11 +263,11 @@ def find_threshold(ra1, ra2, nodata_value=None):
     list2.sort()
     list2 = list2[::-1]
     np.set_printoptions()
-    print 'match treshold' , numpixels, list2[numpixels] , list2[numpixels + 1000] , list2[numpixels-1000]
-    print mask1.size , mask1.sum() , numpixels 
+    print('match treshold' , numpixels, list2[numpixels] , list2[numpixels + 1000] , list2[numpixels-1000])
+    print(mask1.size , mask1.sum() , numpixels) 
     mask2 = mask_threshold(list2, threshold=0)
     vpi = np.where(list2 > 0)
-    print list2.size  , mask2.sum() , np.min(list2[vpi])
+    print(list2.size  , mask2.sum() , np.min(list2[vpi]))
 
     return list2[numpixels]
 
@@ -258,7 +278,7 @@ def mask_threshold(ra1, threshold=0):
     mask1[vp1] = 1
     return mask1
 
-def calc_csi(ra1, ra2, area=[], nodata_value='', threshold=0, verbose=0):
+def calc_csi(ra1, ra2, area=None, nodata_value='', threshold=0, verbose=0):
     """ra1 and ra2 and area need to have the same shape. Assumes each point in array at same position.
        If the points have different areas associated with them then an area array can be input as well.
        ra1 should be the observations/satellite. ra2 should be the forecast/model."""
@@ -267,7 +287,7 @@ def calc_csi(ra1, ra2, area=[], nodata_value='', threshold=0, verbose=0):
     #vp1 = np.where(ra1 > threshold)
     vp1 = np.where(ra1 > 0)
     vptest = np.where(logical_and(ra1>0 , ra1 <= threshold))
-    print 'TEST VPTEST ' , threshold , len(vptest)
+    print('TEST VPTEST ' , threshold , len(vptest))
     #print 'VP1' , vp1
     mask1 = ra1[:] * 0
     mask1[vp1] = 1
@@ -297,12 +317,12 @@ def calc_csi(ra1, ra2, area=[], nodata_value='', threshold=0, verbose=0):
     ra2corr = (mask2 - ra2ave)
     norm =((ra1corr *ra1corr).sum())**0.5 * ((ra2corr*ra2corr).sum())**0.5 
     pcorr = (ra1corr * ra2corr).sum()  / norm
-    print 'PCORR' , pcorr 
-    print 'ra1ave (obs)' ,  ra1ave 
-    print 'ra2ave (calc)' , ra2ave, 
-    print 'NORM' , norm , 'ra1corr*ra2corr' ,  (ra1corr *ra2corr).sum()
+    print('PCORR' , pcorr) 
+    print('ra1ave (obs)' ,  ra1ave) 
+    print('ra2ave (calc)' , ra2ave, end=' ') 
+    print('NORM' , norm , 'ra1corr*ra2corr' ,  (ra1corr *ra2corr).sum())
 #    print totalpts, mask1.shape
-    print mask1.sum(), mask2.sum(), np.max(ra1corr), np.min(ra1corr)
+    print(mask1.sum(), mask2.sum(), np.max(ra1corr), np.min(ra1corr))
 
     ra1ave = 0
     ra2ave = 0
@@ -310,7 +330,7 @@ def calc_csi(ra1, ra2, area=[], nodata_value='', threshold=0, verbose=0):
     ra2corr = (mask2 - ra2ave)
     norm =((ra1corr *ra1corr).sum())**0.5 * ((ra2corr*ra2corr).sum())**0.5 
     pcorr = (ra1corr * ra2corr).sum()  / norm
-    print 'PCORR (uncentered)' , pcorr
+    print('PCORR (uncentered)' , pcorr)
     #plt.imshow(mask1)
     #plt.show()
     #plt.imshow(mask2)
@@ -334,18 +354,20 @@ def calc_csi(ra1, ra2, area=[], nodata_value='', threshold=0, verbose=0):
        csihash['POD'] = (matchra*area).sum() / ((matchra*area).sum() + (onlyra1*area).sum())
        csihash['FAR'] = (onlyra2*area).sum() / ((matchra*area).sum() + (onlyra2*area).sum())
        if verbose ==1:
-         print 'used area'
-         print (matchra*area).sum() , (onlyra1*area).sum() , (onlyra2*area).sum()
-         print  'CSI POD FAR' , csihash['CSI'] , csihash['POD'] , csihash['FAR']
+         print('used area')
+         print((matchra*area).sum() , (onlyra1*area).sum() , (onlyra2*area).sum())
+         print('CSI POD FAR' , csihash['CSI'] , csihash['POD'] , csihash['FAR'])
     else: 
        csihash['CSI'] = matchra.sum() / (matchra.sum() + onlyra1.sum() + onlyra2.sum())
+       # hit rate or probability of detection (p 310 Wilks)
        csihash['POD'] = matchra.sum() / (matchra.sum() + onlyra1.sum())
+       # false alarm ratio (p 310 Wilks)
        csihash['FAR'] = onlyra2.sum() / (matchra.sum() + onlyra2.sum())
        csihash['PCORR'] = pcorr
        if verbose ==1:
-          print 'HERE' , matchra.size, matchra.shape , onlyra2.shape
-          print  matchra.sum() , onlyra1.sum() , onlyra2.sum()
-          print  'CSI POD FAR' , csihash['CSI'] , csihash['POD'] , csihash['FAR']
+          print('HERE' , matchra.size, matchra.shape , onlyra2.shape)
+          print(matchra.sum() , onlyra1.sum() , onlyra2.sum())
+          print('CSI POD FAR' , csihash['CSI'] , csihash['POD'] , csihash['FAR'])
  
     return csihash
 
