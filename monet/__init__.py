@@ -1,4 +1,3 @@
-from monet.plots import savefig
 
 from . import grids, models, monet_accessor, obs, plots, profile, sat, util
 
