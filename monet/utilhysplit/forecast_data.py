@@ -54,6 +54,7 @@ def findcycles_archive(dstart, dend, metdata, direction):
          direction: string : Forward, Back
     """
      from datetime import timedelta as td
+     from datetime import date
      DIR='/pub/archives/'
      metdirlist = []
      metfilelist=[]
@@ -62,13 +63,14 @@ def findcycles_archive(dstart, dend, metdata, direction):
          met = "gdas0p5"
          metdir1=DIR + met + '/'
          if (direction == 'Forward'):
-             ndays = dend.day - dstart.day
-             for x in range (0, ndays + 1):
-                 datelist.append(dstart + td(days = x))
+             datelist.append(dstart)
+             while dstart <= dend:
+                 datelist.append(dstart + td(days = 1))
+                 dstart += td(days = 1)
          elif (direction == 'Back'):
-             ndays = dstart.day - dend.day
-             for  x in range (0, ndays + 1):
-                 datelist.append(dstart - td(days = x))
+             while dstart >= dend:
+                 datelist.append(dstart - td(days = 1))
+                 dstart -= td(days = 1)
          y = 0
          while y < len(datelist):
              metfilelist.append(datelist[y].strftime("%Y%m%d") + '_' + met)         
