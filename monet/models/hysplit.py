@@ -8,28 +8,17 @@ from numpy import fromfile, arange
 
 def _hysplit_latlon_grid_from_dataset(ds):
     pargs = dict()
-    pargs["lat_0"] = ds.latitude.mean()
-    pargs["lon_0"] = ds.longitude.mean()
-
-    p4 = (
-        "+proj=eqc +lat_ts={lat_0} +lat_0={lat_0} +lon_0={lon_0} "
-        "+ellps=WGS84 +datum=WGS84 +units=m +no_defs".format(**pargs)
-    )
+    pargs["lat_0"] = str(ds.latitude.mean())
+    pargs["lon_0"] = str(ds.longitude.mean())
+    
+    p4 = ("+proj=eqc +lat_ts={lat_0} +lat_0={lat_0} +lon_0={lon_0} "
+        "+ellps=WGS84 +datum=WGS84 +units=m +no_defs".format(**pargs))
     return p4
 
-#<<<<<<< HEAD
-#=======
-
-#>>>>>>> develop
 def get_hysplit_latlon_pyresample_area_def(ds, proj4_srs):
     from pyresample import geometry
-
     return geometry.SwathDefinition(lons=ds.longitude.values, lats=ds.latitude.values)
 
-#<<<<<<< HEAD
-#=======
-
-#>>>>>>> develop
 def check_drange(drange, pdate1, pdate2, verbose):
     """
     drange : list of two datetimes
@@ -89,7 +78,6 @@ def open_dataset(fname, drange=None, verbose=False):
     # open the dataset using xarray
     binfile = ModelBin(fname, drange=drange, verbose=verbose, readwrite="r")
     dset = binfile.dset
-    # return dset
     # get the grid information
 #<<<<<<< HEAD
     ## May not need the proj4 definitions now that lat lon defined properly.
@@ -101,16 +89,13 @@ def open_dataset(fname, drange=None, verbose=False):
 
     # now assign this to the dataset and each dataarray
     dset = dset.assign_attrs({"proj4_srs": p4})
-    # return dset
+
     for iii in dset.variables:
         dset[iii] = dset[iii].assign_attrs({"proj4_srs": p4})
         for jjj in dset[iii].attrs:
             dset[iii].attrs[jjj] = dset[iii].attrs[jjj].strip()
         dset[iii] = dset[iii].assign_attrs({"area": swath})
     dset = dset.assign_attrs(area=swath)
-
-    # dset.drop('x')
-    # dset.drop('y')
 
     return dset
 
@@ -277,7 +262,7 @@ class ModelBin(object):
                 ("conc", real4),
             ]
         )
-
+       
         rec8c = dtype([("pad2", int4)])
         recs = (
             rec1,
@@ -307,7 +292,7 @@ class ModelBin(object):
                 "WARNING in ModelBin _readfile - number of starting locations "
                 "incorrect"
             )
-            print(hdata1["start_loc"])
+            #print(hdata1["start_loc"])
         # in python 3 np.fromfile reads the record into a list even if it is
         # just one number.
         # so if the length of this record is greater than one something is
@@ -405,51 +390,26 @@ class ModelBin(object):
         col_name = hdata8a["poll"][0].decode("UTF-8")
         ndata = hdata8b.byteswap().newbyteorder()  # otherwise get endian error.
         concframe = pd.DataFrame.from_records(ndata)
-        # add latitude longitude columns
-        # lat = arange(self.llcrnr_lat,
-        #             self.llcrnr_lat + self.nlat * self.dlat,
-        #             self.dlat)
-        # lon = arange(self.llcrnr_lon,
-        #             self.llcrnr_lon + self.nlon * self.dlon,
-        #             self.dlon)
-
-        # def flat(x):
-        #    return lat[x - 1]
-        #
-        # def flon(x):
-        #    return lon[x - 1]
-
-        # concframe['latitude'] = concframe['jndx'].apply(flat)
-        # concframe['longitude'] = concframe['indx'].apply(flon)
-        # concframe.drop(['jndx', 'indx'], axis=1, inplace=True)
         concframe["levels"] = lev_name
         concframe["time"] = pdate1
-
-        # rename jndx x
-        # rename indx y
+        
         names = concframe.columns.values
         names = ["y" if x == "jndx" else x for x in names]
         names = ["x" if x == "indx" else x for x in names]
         names = ["z" if x == "levels" else x for x in names]
         concframe.columns = names
-        concframe.set_index(
+        concframe.set_index(["time", "z", "y", "x"],inplace=True)
             # ['time', 'levels', 'longitude', 'latitude'],
-            # ['time', 'levels', 'longitude', 'latitude','x','y'],
-            ["time", "z", "y", "x"],
-            inplace=True,
-        )
+            # ['time', 'levels', 'longitude', 'latitude','x','y'],       
         concframe.rename(columns={"conc": col_name}, inplace=True)
-        # mgrid = np.meshgrid(lat, lon)
         return concframe
 
     def makegrid(self, xindx, yindx):
-        lat = arange(
-            self.llcrnr_lat, self.llcrnr_lat + self.nlat * self.dlat, self.dlat
-        )
-        lon = arange(
-            self.llcrnr_lon, self.llcrnr_lon + self.nlon * self.dlon, self.dlon
-        )
+        lat = arange(self.llcrnr_lat, self.llcrnr_lat +  self.nlat * self.dlat, self.dlat)
+        lon = arange(self.llcrnr_lon, self.llcrnr_lon + self.nlon * self.dlon, self.dlon)
+        
         lonlist = [lon[x - 1] for x in xindx]
+        #print(xindx, yindx)
         latlist = [lat[x - 1] for x in yindx]
         mgrid = np.meshgrid(lonlist, latlist)
         return mgrid
@@ -492,21 +452,21 @@ class ModelBin(object):
         tempzeroconcdates = []
         # Reads header data. This consists of records 1-5.
         hdata1 = fromfile(fp, dtype=rec1, count=1)
+        #print(hdata1)
         nstartloc = self.parse_header(hdata1)
-
+        
         hdata2 = fromfile(fp, dtype=rec2, count=nstartloc)
         century = self.parse_hdata2(hdata2, nstartloc, century)
-
+        #print(hdata2)
         hdata3 = fromfile(fp, dtype=rec3, count=1)
         ahash = self.parse_hdata3(hdata3, ahash)
-
+        #print(hdata3)
         # read record 4 which gives information about vertical levels.
         hdata4a = fromfile(fp, dtype=rec4a, count=1)  # gets nmber of levels
-        hdata4b = fromfile(
-            fp, dtype=rec4b, count=hdata4a["nlev"][0]
-        )  # reads levels, count is number of levels.
+        # reads levels, count is number of levels.
+        hdata4b = fromfile(fp, dtype=rec4b, count=hdata4a["nlev"][0])  
         self.parse_hdata4(hdata4a, hdata4b)
-
+        #print(hdata4a, hdata4b)
         # read record 5 which gives information about pollutants / species.
         hdata5a = fromfile(fp, dtype=rec5a, count=1)
         fromfile(fp, dtype=rec5b, count=hdata5a["pollnum"][0])
@@ -514,7 +474,7 @@ class ModelBin(object):
         # hdata5b = fromfile(fp, dtype=rec5b, count=hdata5a['pollnum'][0])
         # hdata5c = fromfile(fp, dtype=rec5c, count=1)
         self.atthash["Number of Species"] = hdata5a["pollnum"][0]
-
+        #print(hdata5a)
         # Loop to reads records 6-8. Number of loops is equal to number of
         # output times.
         # Only save data for output times within drange. if drange=[] then
@@ -527,7 +487,9 @@ class ModelBin(object):
         testf = True
         while testf:
             hdata6 = fromfile(fp, dtype=rec6, count=1)
+            #print(hdata6)
             hdata7 = fromfile(fp, dtype=rec6, count=1)
+            #print(hdata7)
             check, pdate1, pdate2 = self.parse_hdata6and7(hdata6, hdata7, century)
             if not check:
                 break
@@ -543,9 +505,7 @@ class ModelBin(object):
                     # record 8a has the number of elements (ne). If number of
                     # elements greater than 0 than there are concentrations.
                     hdata8a = fromfile(fp, dtype=rec8a, count=1)
-                    self.atthash["Species ID"].append(
-                        hdata8a["poll"][0].decode("UTF-8")
-                    )
+                    self.atthash["Species ID"].append(hdata8a["poll"][0].decode("UTF-8"))
                     # if number of elements is nonzero then
                     if hdata8a["ne"] >= 1:
                         # get rec8 - indx and jndx
@@ -554,9 +514,8 @@ class ModelBin(object):
                         # non zero conc
                         self.nonzeroconcdates.append(pdate1)
                     else:
-                        tempzeroconcdates.append(
-                            pdate1
-                        )  # or add sample start time to list of start times
+                        tempzeroconcdates.append(pdate1)
+                        # or add sample start time to list of start times
                         # with zero conc.
                     # This is just padding.
                     fromfile(fp, dtype=rec8c, count=1)
@@ -565,6 +524,7 @@ class ModelBin(object):
                     if savedata and hdata8a["ne"] >= 1:
                         self.nonzeroconcdates.append(pdate1)
                         inc_iii = True
+                        #print(hdata8a, hdata8b)
                         concframe = self.parse_hdata8(hdata8a, hdata8b, pdate1)
                         dset = xr.Dataset.from_dataframe(concframe)
                         if verbose:
@@ -576,8 +536,13 @@ class ModelBin(object):
                         else:  # create dataframe for level and pollutant and
                             # then merge with main dataframe.
                             # self.dset = xr.concat([self.dset, dset],'levels')
+                            
                             self.dset = xr.merge([self.dset, dset])
+                       
+                        #print(hdata8a)
+                        #print(hdata8b)
                         ii += 1
+                        
                 # END LOOP to go through each pollutant
             # END LOOP to go through each level
             # safety check - will stop sampling time while loop if goes over
@@ -587,17 +552,41 @@ class ModelBin(object):
             if inc_iii:
                 iii += 1
         self.atthash["Concentration Grid"] = ahash
-        self.atthash["Species ID"] = list(set(self.atthash["Species ID"]))
+        species = list(set(self.atthash["Species ID"]))
+        species.append('empty')
+        self.atthash["Species ID"] = species
         self.atthash["Coordinate time description"] = "Beginning of sampling time"
         # END OF Loop to go through each sampling time
         if self.dset.variables:
-            self.dset.attrs = self.atthash
-            mgrid = self.makegrid(self.dset.coords["x"], self.dset.coords["y"])
+            #Adding buffer to edge of HYSPLIT data
+            #Merging in new variable to expand all variable arrays
+            xind = self.dset.coords["x"]
+            yind = self.dset.coords["y"]
+            xnew = xr.DataArray(np.arange(xind[0],xind[-1]+8,1))
+            xnew = xnew.rename({'dim_0':'x'})
+            xnew = xnew.rename('x')
+            xnew = xnew.assign_coords(x = xnew)
+            ynew = xr.DataArray(np.arange(yind[0],yind[-1]+8,1))
+            ynew = ynew.rename({'dim_0':'y'})
+            ynew = ynew.rename('y')
+            ynew = ynew.assign_coords(y = ynew)
+            #print(xnew,ynew)
+            t = self.dset.coords["time"]
+            hgt = self.dset.coords["z"]
+            empty = np.zeros(shape = (len(t), len(hgt), len(xnew), len(ynew)))
+            empty = np.where(empty != 0, empty, np.nan)
+            temp = xr.Dataset({'empty':(['time','z','x','y'],empty)}, coords = {'time': t, 'x': xnew, 'y': ynew, 'z': hgt})
+            #print(empty)
+            #print(temp)
+            self.dset = xr.merge([self.dset, temp])
+            
+            #Creating latitude and longitude arrays
+            mgrid = self.makegrid(xnew, ynew)
             self.dset = self.dset.assign_coords(longitude=(("y", "x"), mgrid[0]))
             self.dset = self.dset.assign_coords(latitude=(("y", "x"), mgrid[1]))
-
             self.dset = self.dset.reset_coords()
             self.dset = self.dset.set_coords(["time", "latitude", "longitude"])
+            self.dset.attrs = self.atthash
         if verbose:
             print(self.dset)
         if iii == 0:
