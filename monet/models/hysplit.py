@@ -536,13 +536,8 @@ class ModelBin(object):
                         else:  # create dataframe for level and pollutant and
                             # then merge with main dataframe.
                             # self.dset = xr.concat([self.dset, dset],'levels')
-                            
                             self.dset = xr.merge([self.dset, dset])
-                       
-                        #print(hdata8a)
-                        #print(hdata8b)
-                        ii += 1
-                        
+                        ii += 1    
                 # END LOOP to go through each pollutant
             # END LOOP to go through each level
             # safety check - will stop sampling time while loop if goes over
@@ -570,23 +565,24 @@ class ModelBin(object):
             ynew = ynew.rename({'dim_0':'y'})
             ynew = ynew.rename('y')
             ynew = ynew.assign_coords(y = ynew)
-            #print(xnew,ynew)
+            #Creates new empty variable to expand arrays
             t = self.dset.coords["time"]
             hgt = self.dset.coords["z"]
             empty = np.zeros(shape = (len(t), len(hgt), len(xnew), len(ynew)))
             empty = np.where(empty != 0, empty, np.nan)
             temp = xr.Dataset({'empty':(['time','z','x','y'],empty)}, coords = {'time': t, 'x': xnew, 'y': ynew, 'z': hgt})
-            #print(empty)
-            #print(temp)
+            #Merges new exmpy variable into dataset
             self.dset = xr.merge([self.dset, temp])
             
-            #Creating latitude and longitude arrays
+            #Creating latitude and longitude - setting coordinates
             mgrid = self.makegrid(xnew, ynew)
             self.dset = self.dset.assign_coords(longitude=(("y", "x"), mgrid[0]))
             self.dset = self.dset.assign_coords(latitude=(("y", "x"), mgrid[1]))
             self.dset = self.dset.reset_coords()
             self.dset = self.dset.set_coords(["time", "latitude", "longitude"])
+            #Setting dataset attributes
             self.dset.attrs = self.atthash
+            
         if verbose:
             print(self.dset)
         if iii == 0:
