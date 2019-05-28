@@ -29,6 +29,7 @@ if added:
     f = 0
     while f < len(added):
         add = ''.join(added[f])   #Convert to string from list
+        #See file run_hysp_alert.py for information about functions
         out = rha.make_files(path_to_watch,add)
         rha.run_hysp(out[0],out[1])
         rha.make_traj(out[0],out[1])
@@ -38,8 +39,10 @@ if removed:
     print('Files removed:',', '.join(removed))
 
 if current == original:
-    print('No updates to '+path_to_watch+' folder!'
+    print('No updates to '+path_to_watch+' folder!')
 
 #Write current list of files to original_list.txt - update for next iteration
 with open('/hysplit-users/allisonr/VOLCANO/original_list.txt', 'w') as fis:
     fis.write(json.dumps(current))
+
+#os.system('mv original_list2.txt original_list.txt')
