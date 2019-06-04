@@ -10,12 +10,13 @@ import string
 import datetime
 #import shapely.geometry as sgeo
 #from hysplit import *
-import itertools
+from itertools import permutations
+import time
+
 
 """
 routines to help calculates critical success index by a point by point comparison.
 data must be gridded the same.
-
 Functions
 ---------
 match_ra
@@ -24,9 +25,6 @@ calc_fss  (fraction skill score)
 find_threshold
 mask_threshold
 calc_csi (critical success index, aka figure of merit in space)
-
-
-
 """
 def match_ra(ra1, lat1, lon1, ra2, lat2, lon2, missing_value=0, verbose=1):
     """inputs two data 'structures' data, latitude, longitude.
@@ -40,7 +38,6 @@ def match_ra(ra1, lat1, lon1, ra2, lat2, lon2, missing_value=0, verbose=1):
     shape of ra2, lat2, lon2 should be the same.
     Assumes lat-lon grids are spaced the same but may be offset. 
     output arrays can be input into calc_csi 
-
     return
     latlongrid 
     ra1 
@@ -155,7 +152,6 @@ def match_ra(ra1, lat1, lon1, ra2, lat2, lon2, missing_value=0, verbose=1):
        print('Shapes of output arrays ra1, ra2, lat, lon' , ra1.shape, ra2.shape, latlongrid[0].shape, latlongrid[1].shape)
     return latlongrid , ra1 , ra2
 
-
 def get_area_ra(lat, lon, radius=6378.137):
     """Input is a 2d latitude numpy array and a 2d longitude numpy array. 
        Output is array of same size with corresponding area (km2) of each grid cell.
@@ -174,74 +170,90 @@ def get_area_ra(lat, lon, radius=6378.137):
     return area
 
 
-def calc_fss(ra1, ra2, nodata_value='', threshold=0, verbose=0, sn=[0,3]):
-   """calculates the fss (fraction skill score See Robers and Lean, Monthly
-      Weather Review, V126 2007..)
-
-       sn is the size of the squares to use in number of pixels to a side.
-       default is to use pixels size squares
+def calc_fss(ra1, ra2, nodata_value='', threshold=0, verbose=0, sn=[0,5]):
+   """Calculates the fraction skill score (fss) 
+       See Robers and Lean (2008) Monthly Weather Review
+       and Schwartz et al (2010) Weather and Forecasting
+       for more information.
+       
+       ra1 is observations/satellite
+       ra2 is the forecast/model
+       threshold = value for data threshold
+       sn is the number of pixels (radius) to use in fractions calculation
+            default is to use 1, 3, 5, 7, 9 pixels size squares
    """
    fss_list = []
-   print('RANGE' , list(range(sn[0],sn[1])))
+   if (verbose == 1):
+       print('RANGE' , list(range(sn[0],sn[1])))
    bigN = ra1.size
-   # print('bigN', bigN)
-  
+   # create binary fields
+   mra1 = mask_threshold(ra1, threshold = 0)
+   mra2 = mask_threshold(ra2, threshold = threshold)
    for sz in range(sn[0],sn[1]):
-
        # e.g. for sz=3, ijrange=[-3,-2,-1,0,1,2,3]
        ijrange = list(range(-1*sz, sz+1))
+       print('ijrange: ', ijrange)
        # li will be coordinates of all the points in the ra.
        # e.g. [(-3,-3), (-3,-2), (-3,-1).....]
-       x = itertools.permutations(ijrange+ijrange,2)
-       li=[]
-       for i  in x:
+       x = permutations(ijrange+ijrange,2)
+       li = []
+       for i in x:
            li.append(i)
-       # remove duplicates (e.g. (2,2) will be in there twice)
+       # remove duplicates (e.g. (2,3) will be in there twice)
        incrlist=list(set(li))
+       print(incrlist)
        square_size = len(incrlist)
-       print('square size ' , sz*2+1 , square_size)
+       if (verbose == 1):
+           print('square size ' , sz*2+1 , square_size)
+           print(ra1.shape)
+       
+       # total number of above threshold points.
+       print('SUMS' , mra1.sum() , mra2.sum())
        icol = ra1.shape[1]
        irow = ra1.shape[0]
        maxrow = irow
        maxcol = icol
-       print(ra1.shape , irow , icol)
-       # create binary fields
-       mra1 = mask_threshold(ra1, threshold=0)
-       mra2 = mask_threshold(ra2, threshold=threshold)
-       # total number of above threshold points.
-       print('SUMS' , mra1.sum() , mra2.sum())
        # create empty arrays of same shape as mra1 and mra2
        list_fractions_1 = np.empty_like(mra1).astype(float)
        list_fractions_2 = np.empty_like(mra1).astype(float)
+       start = time.time()
        for ic in range(0,icol):
            for ir in range(0,irow):
-               fraction_1=0
-               fraction_2=0
+               fraction_1 = 0
+               fraction_2 = 0
                for incr in incrlist:
-                   if ir+incr[0] < maxrow and ic+incr[1] < maxcol and ir+incr[0]>=0 and ic+incr[1] >=0:
-                      fraction_1 += mra1[ir + incr[0]][ic+incr[1]]
-                      fraction_2 += mra2[ir + incr[0]][ic+incr[1]]
-               fraction_1 = float(fraction_1) / float(square_size)          
-               fraction_2 = float(fraction_2) / float(square_size)          
-               list_fractions_1[ir][ic] = float(fraction_1)
-               list_fractions_2[ir][ic] = float(fraction_2)
-       plot_fractions=False
-       if plot_fractions:
+                   #Finding pixels for fraction calculation
+                   #Requires designated box for calculation to be fully within domain
+                   #doesn't calculate at edges
+                   if ir+incr[0] < maxrow and ic+incr[1] < maxcol and ir+incr[0] >= 0 and ic+incr[1] >= 0:
+                       fraction_1 += mra1[ir + incr[0]][ic+incr[1]]
+                       fraction_2 += mra2[ir + incr[0]][ic+incr[1]]
+               #if fraction_1 > 0 or fraction_2 > 0:
+               list_fractions_1[ir][ic] = (float(fraction_1) / float(square_size))
+               list_fractions_2[ir][ic] = (float(fraction_2) / float(square_size))
+       end = time.time()
+       print('Total time: ', end - start)
+       #Can plot fractions if desired (double check calculations)
+       plot_fractions = False
+       if (plot_fractions == True):
           fig = plt.figure(1)
           ax1 = fig.add_subplot(2,1,1) 
           ax2 = fig.add_subplot(2,1,2) 
           ax1.imshow(list_fractions_1)
           ax2.imshow(list_fractions_2)
           plt.show()
+       #Calculate the Fractions Brier Score (FBS)
        fbs = np.power(list_fractions_1 - list_fractions_2, 2).sum() / float(bigN)
        print('FBS ' , fbs)
+       #Calculate the worst possible FBS (assuming no overlap of nonzero fractions)
        fbs_ref = (np.power(list_fractions_1,2).sum() + np.power(list_fractions_2,2).sum() ) / float(bigN)
        print('FBS reference' , fbs_ref)
+       #Calculate the Fractional Skill Score (FSS)
        fss = 1 - (fbs / fbs_ref)
        print('FSS ' , fss)
        fss_list.append((fss, len(incrlist)))
+       print(' ')
    return fss_list
-
 
 def find_threshold(ra1, ra2, nodata_value=None):
     """
@@ -268,44 +280,79 @@ def find_threshold(ra1, ra2, nodata_value=None):
     mask2 = mask_threshold(list2, threshold=0)
     vpi = np.where(list2 > 0)
     print(list2.size  , mask2.sum() , np.min(list2[vpi]))
-
     return list2[numpixels]
 
-def mask_threshold(ra1, threshold=0):
-    """input array and threshold. Returns array with 1's where value of array above threshold and 0 otherwise"""
+def mask_threshold(ra1, threshold = 0):
+    """input array and threshold. 
+        Returns array with 1's where value is above threshold, and 0 otherwise"""
     vp1 = np.where(ra1 > threshold)
     mask1 = np.zeros_like(ra1)
     mask1[vp1] = 1
     return mask1
 
-def calc_csi(ra1, ra2, area=None, nodata_value='', threshold=0, verbose=0):
-    """ra1 and ra2 and area need to have the same shape. Assumes each point in array at same position.
-       If the points have different areas associated with them then an area array can be input as well.
-       ra1 should be the observations/satellite. ra2 should be the forecast/model."""
-    area=np.array(area)
-    csihash = {}
-    #vp1 = np.where(ra1 > threshold)
-    vp1 = np.where(ra1 > 0)
-    vptest = np.where(logical_and(ra1>0 , ra1 <= threshold))
-    print('TEST VPTEST ' , threshold , len(vptest))
-    #print 'VP1' , vp1
-    mask1 = ra1[:] * 0
-    mask1[vp1] = 1
-    if threshold != 0:
-       vp2 = np.where(ra2 >= threshold)
-    else:
-       vp2 = np.where(ra2 > threshold)
-    mask2 = ra2[:] * 0
-    mask2[vp2] = 1
+def trim_arrays(mask1, mask2, sn=[0,5]):
+    """Trims binary mask arrays to array size that encompasses data and minor
+    padding for both mask input arrays. Requires pixel radius (sn) value to determine 
+    padding to keep in array. Will reduce time of fss calculation."""
 
+    pad = sn[1]
+    rows1 = np.any(mask1, axis=1)
+    cols1 = np.any(mask1, axis=0)
+    rows2 = np.any(mask2, axis=1)
+    cols2 = np.any(mask2, axis=0)
+    ymin1, ymax1 = np.where(rows1)[0][[0, -1]]
+    xmin1, xmax1 = np.where(cols1)[0][[0, -1]]
+    ymin2, ymax2 = np.where(rows2)[0][[0, -1]]
+    xmin2, xmax2 = np.where(cols2)[0][[0, -1]]
+    trim1 = mask1[(ymin1-pad):(ymax1+1+pad), (xmin1-pad):(xmax1+1+pad)]
+    trim2 = mask2[(ymin2-pad):(ymax2+1+pad), (xmin2-pad):(xmax2+1+pad)]
+
+    yarr = [ymin1, ymin2, ymax1, ymax2]
+    xarr = [xmin1, xmin2, xmax1, xmax2]
+    trimboth1 = mask1[(min(yarr)-pad):(max(yarr)+1+pad), (min(xarr)-pad):(max(xarr)+1+pad)]
+    trimboth2 = mask2[(min(yarr)-pad):(max(yarr)+1+pad), (min(xarr)-pad):(max(xarr)+1+pad)]
+
+    return trim1, trim2, trimboth1, trimboth2
+
+def calc_csi(ra1, ra2, area=None, nodata_value='', threshold=0, verbose=0):
+    """ra1 and ra2 need to be on the same grid. 
+        See monet.remap_nearest or monet.remap_xesmf to remap arrays.
+        ra1 = observations/satellite
+        ra2 = the forecast/model
+        area = optional array of grid areas
+        nodata_value = flag for expanded array grid cells created if ash near boundary
+        threshold = value for data threshold
+        CSI equation: hits / (hits + misses + false alarms)"""
+    #ra1 = ra1.load()
+    #ra2 = ra2.load()
+    area=np.array(area)
+    #Creating a csihash disctionary
+    csihash = {}
+    #vptest = np.where(logical_and(ra1 > 0 , ra1 <= threshold))
+    #if (verbose == 1):
+    #    print('TEST VPTEST ' , threshold , vptest)
+
+    #Converting ra1 and ra2 to arrays of 0's and 1's (1 with values, 0 no values)
+    mask1 = mask_threshold(ra1, threshold = 0)
+    if (threshold != 0):
+       vp2 = np.where(ra2 >= threshold)
+       mask2 = ra2[:] * 0
+       mask2[vp2] = 1
+    else:
+       mask2 = mask_threshold(ra2, threshold = 0)
+
+    #Calculating hits (matchra), misses (onlyra1), false alarms (onlyra2) for CSI calculation
     matchra = mask2 * mask1  #returns array with ones where the two arrays both have valid values.
     onlyra1 = mask1 - matchra  #returns array with ones where ra1 has valid values and ra2 does not.
     onlyra2 = mask2 - matchra  #returns array with ones where ra2 has valid values and ra1 does not.
+    #Assigning a, b, and c arrays to csihash dictionary
     csihash['matched'] = matchra
     csihash['ra1'] = onlyra1
     csihash['ra2'] = onlyra2
-    allra = matchra + onlyra1 + onlyra2 ##ra with 1's in union. 0's where both are 0.
-    vpi = np.where(allra==1)
+
+    allra = matchra + onlyra1 + onlyra2 ##ra with 1's in union. 0's where both are 0. (THIS ISNT TRUE)
+    #allra would have 3 at union, 1 at onlyra1, 1 at onlyra2, and 0 where both are 0, right???
+    vpi = np.where(allra == 1) ## Why is this necessary?
     ##Find pattern correlation (from Zidikheri and Potts) doesn't make sense to me.
     totalpts = matchra.sum() + onlyra1.sum() + onlyra2.sum()
     totalpts = mask2.shape[0] * mask2.shape[1] 
@@ -370,11 +417,3 @@ def calc_csi(ra1, ra2, area=None, nodata_value='', threshold=0, verbose=0):
           print('CSI POD FAR' , csihash['CSI'] , csihash['POD'] , csihash['FAR'])
  
     return csihash
-
-    
-
-
-
-
-
-
