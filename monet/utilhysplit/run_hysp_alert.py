@@ -117,8 +117,9 @@ def run_hysp(wdir, pid):
 def make_traj(wdir, pid):
     """ Runs trajplot.py to create figure from the tdump file created from run_hysp."""
     #import trajplot
-    import os
     #process = subprocess.Popen('/hysplit-users/allisonr/hysplit/trunk/exec/trajplot -itdump.'+pid+' -l6 -otraj_'+pid+'.ps -s1 -v1')
+    import os
+    
     cwd=os.getcwd()
     os.chdir(wdir)
     os.system('/hysplit-users/allisonr/hysplit/trunk/exec/trajplot -itdump.'+pid+' -l6 -otraj_'+pid+'.ps -s1 -v1')
