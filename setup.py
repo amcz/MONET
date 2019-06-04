@@ -1,7 +1,3 @@
-import os
-import sys
-from warnings import warn
-
 try:
     from setuptools import setup, find_packages
 except ImportError:
@@ -9,7 +5,7 @@ except ImportError:
 
 setup(
     name='monet',
-    version='2.1.3',
+    version='2.1.3-dev',
     url='https://github.com/noaa-oar-arl/MONET',
     license='MIT',
     include_package_data=True,
@@ -30,6 +26,22 @@ setup(
     ],
     description='The Model and Observation Evaluation Toolkit (MONET)',
     install_requires=[
-        'pandas', 'netcdf4', 'xarray', 'dask', 'xesmf', 'pyresample',
-        'matplotlib', 'seaborn', 'future', 'cartopy'
-    ])
+        'pandas', 'netcdf4', 'xarray', 'dask', 'pyresample', 'matplotlib',
+        'seaborn', 'cartopy'
+    ],
+    extra_requires={'xesmf;platform_system!="Windows"'})
+
+# - python
+# - setuptools
+# - numpy
+# - pandas
+# - xarray
+# - dask
+# - cartopy
+# - matplotlib
+# - seaborn
+# - pseudonetcdf
+# - pyresample
+# - xesmf # [not win]
+# - python-stratify
+# - pytables
