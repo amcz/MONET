@@ -1,10 +1,15 @@
-#""" HYPSLIT MODEL READER """
+#hysplit.py
 import datetime
 import pandas as pd
 import xarray as xr
 import numpy as np
 from numpy import fromfile, arange
 
+""" Reader for HYPSLIT Model output
+-------------
+Class: ModelBin
+-------------
+ """
 
 def _hysplit_latlon_grid_from_dataset(ds):
     pargs = dict()
@@ -320,9 +325,7 @@ class ModelBin(object):
                     century = 2000
                 else:
                     century = 1900
-                print(
-                    "WARNING: Guessing Century for HYSPLIT concentration file", century
-                )
+                print("WARNING: Guessing Century for HYSPLIT concentration file", century)
             # add sourcedate which is datetime.datetime object
             sourcedate = datetime.datetime(
                 century + hdata2["r_year"][nnn],
@@ -368,12 +371,8 @@ class ModelBin(object):
         #    print(hdata7)
         # pdate1 is the sample start
         # pdate2 is the sample stop
-        pdate1 = datetime.datetime(
-            century + hdata6["oyear"], hdata6["omonth"], hdata6["oday"], hdata6["ohr"]
-        )
-        pdate2 = datetime.datetime(
-            century + hdata7["oyear"], hdata7["omonth"], hdata7["oday"], hdata7["ohr"]
-        )
+        pdate1 = datetime.datetime(century + hdata6["oyear"], hdata6["omonth"], hdata6["oday"], hdata6["ohr"], hdata6["omin"])
+        pdate2 = datetime.datetime(century + hdata7["oyear"], hdata7["omonth"], hdata7["oday"], hdata7["ohr"], hdata7["omin"])
         self.atthash["Sampling Time"] = pdate2 - pdate1
         return True, pdate1, pdate2
 
@@ -452,21 +451,16 @@ class ModelBin(object):
         tempzeroconcdates = []
         # Reads header data. This consists of records 1-5.
         hdata1 = fromfile(fp, dtype=rec1, count=1)
-        #print(hdata1)
         nstartloc = self.parse_header(hdata1)
-        
         hdata2 = fromfile(fp, dtype=rec2, count=nstartloc)
         century = self.parse_hdata2(hdata2, nstartloc, century)
-        #print(hdata2)
         hdata3 = fromfile(fp, dtype=rec3, count=1)
         ahash = self.parse_hdata3(hdata3, ahash)
-        #print(hdata3)
         # read record 4 which gives information about vertical levels.
         hdata4a = fromfile(fp, dtype=rec4a, count=1)  # gets nmber of levels
         # reads levels, count is number of levels.
         hdata4b = fromfile(fp, dtype=rec4b, count=hdata4a["nlev"][0])  
         self.parse_hdata4(hdata4a, hdata4b)
-        #print(hdata4a, hdata4b)
         # read record 5 which gives information about pollutants / species.
         hdata5a = fromfile(fp, dtype=rec5a, count=1)
         fromfile(fp, dtype=rec5b, count=hdata5a["pollnum"][0])
@@ -580,6 +574,13 @@ class ModelBin(object):
             self.dset = self.dset.assign_coords(latitude=(("y", "x"), mgrid[1]))
             self.dset = self.dset.reset_coords()
             self.dset = self.dset.set_coords(["time", "latitude", "longitude"])
+            
+           #Removing temoprary empty variable
+            self.dset =  self.dset.drop('empty')
+            species = list(set(self.atthash["Species ID"]))
+            species.remove('empty')
+            self.atthash["Species ID"] = species
+            
             #Setting dataset attributes
             self.dset.attrs = self.atthash
             
