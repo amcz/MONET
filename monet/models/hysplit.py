@@ -16,8 +16,7 @@ def _hysplit_latlon_grid_from_dataset(ds):
     pargs["lat_0"] = str(ds.latitude.mean())
     pargs["lon_0"] = str(ds.longitude.mean())
     
-    p4 = ("+proj=eqc +lat_ts={lat_0} +lat_0={lat_0} +lon_0={lon_0} "
-        "+ellps=WGS84 +datum=WGS84 +units=m +no_defs".format(**pargs))
+    p4 = ("proj=eqc lat_0={lat_0} lon_0={lon_0} ellps=WGS84 datum=WGS84 units=/m^3".format(**pargs))
     return p4
 
 def get_hysplit_latlon_pyresample_area_def(ds, proj4_srs):
@@ -84,11 +83,7 @@ def open_dataset(fname, drange=None, verbose=False):
     binfile = ModelBin(fname, drange=drange, verbose=verbose, readwrite="r")
     dset = binfile.dset
     # get the grid information
-#<<<<<<< HEAD
     ## May not need the proj4 definitions now that lat lon defined properly.
-#=======
-    # May not need the proj4 definitions now that lat lon defined properly.
-#>>>>>>> develop
     p4 = _hysplit_latlon_grid_from_dataset(dset)
     swath = get_hysplit_latlon_pyresample_area_def(dset, p4)
 
@@ -308,35 +303,26 @@ class ModelBin(object):
         return nstartloc
 
     def parse_hdata2(self, hdata2, nstartloc, century):
-
         # Loop through starting locations
         for nnn in range(0, nstartloc):
             # create list of starting latitudes, longitudes and heights.
             self.slat.append(hdata2["s_lat"][nnn])
             self.slon.append(hdata2["s_lon"][nnn])
             self.sht.append(hdata2["s_ht"][nnn])
-            self.atthash["Starting Locations"].append(
-                (hdata2["s_lat"][nnn], hdata2["s_lon"][nnn])
-            )
-
-            # try to guess century if century not given
-            if century is None:
-                if hdata2["r_year"][0] < 50:
-                    century = 2000
-                else:
-                    century = 1900
+            self.atthash["Starting Locations"].append((hdata2["s_lat"][nnn], hdata2["s_lon"][nnn], hdata2["s_ht"][nnn]))
+        nnn += 1  #End of loop through starting locations
+        # try to guess century if century not given
+        if century is None:
+            if hdata2["r_year"][0] < 50:
+                century = 2000
+            else:
+                century = 1900
                 print("WARNING: Guessing Century for HYSPLIT concentration file", century)
             # add sourcedate which is datetime.datetime object
-            sourcedate = datetime.datetime(
-                century + hdata2["r_year"][nnn],
-                hdata2["r_month"][nnn],
-                hdata2["r_day"][nnn],
-                hdata2["r_hr"][nnn],
-                hdata2["r_min"][nnn],
-            )
-            self.sourcedate.append(sourcedate)
-            self.atthash["Source Date"].append(sourcedate)
-            return century
+        sourcedate = datetime.datetime(century + hdata2["r_year"][0], hdata2["r_month"][0], hdata2["r_day"][0], hdata2["r_hr"][0], hdata2["r_min"][0])
+        self.sourcedate.append(sourcedate)
+        self.atthash["Source Date"].append(sourcedate)
+        return century
 
     def parse_hdata3(self, hdata3, ahash):
         # Description of concentration grid
@@ -365,15 +351,11 @@ class ModelBin(object):
         # if no data read then break out of the while loop.
         if not hdata6:
             return False, None, None
-        # if verbose:
-        #    print('REC 6 & 7 ***************')
-        #    print(hdata6)
-        #    print(hdata7)
         # pdate1 is the sample start
         # pdate2 is the sample stop
         pdate1 = datetime.datetime(century + hdata6["oyear"], hdata6["omonth"], hdata6["oday"], hdata6["ohr"], hdata6["omin"])
         pdate2 = datetime.datetime(century + hdata7["oyear"], hdata7["omonth"], hdata7["oday"], hdata7["ohr"], hdata7["omin"])
-        self.atthash["Sampling Time"] = pdate2 - pdate1
+        #self.atthash["Sampling Time"] = pdate2 - pdate1
         return True, pdate1, pdate2
 
     def parse_hdata8(self, hdata8a, hdata8b, pdate1):
@@ -457,7 +439,7 @@ class ModelBin(object):
         hdata3 = fromfile(fp, dtype=rec3, count=1)
         ahash = self.parse_hdata3(hdata3, ahash)
         # read record 4 which gives information about vertical levels.
-        hdata4a = fromfile(fp, dtype=rec4a, count=1)  # gets nmber of levels
+        hdata4a = fromfile(fp, dtype=rec4a, count=1)  # gets number of levels
         # reads levels, count is number of levels.
         hdata4b = fromfile(fp, dtype=rec4b, count=hdata4a["nlev"][0])  
         self.parse_hdata4(hdata4a, hdata4b)
@@ -468,7 +450,6 @@ class ModelBin(object):
         # hdata5b = fromfile(fp, dtype=rec5b, count=hdata5a['pollnum'][0])
         # hdata5c = fromfile(fp, dtype=rec5c, count=1)
         self.atthash["Number of Species"] = hdata5a["pollnum"][0]
-        #print(hdata5a)
         # Loop to reads records 6-8. Number of loops is equal to number of
         # output times.
         # Only save data for output times within drange. if drange=[] then
@@ -481,9 +462,7 @@ class ModelBin(object):
         testf = True
         while testf:
             hdata6 = fromfile(fp, dtype=rec6, count=1)
-            #print(hdata6)
             hdata7 = fromfile(fp, dtype=rec6, count=1)
-            #print(hdata7)
             check, pdate1, pdate2 = self.parse_hdata6and7(hdata6, hdata7, century)
             if not check:
                 break
@@ -531,7 +510,7 @@ class ModelBin(object):
                             # then merge with main dataframe.
                             # self.dset = xr.concat([self.dset, dset],'levels')
                             self.dset = xr.merge([self.dset, dset])
-                        ii += 1    
+                        ii += 1
                 # END LOOP to go through each pollutant
             # END LOOP to go through each level
             # safety check - will stop sampling time while loop if goes over
