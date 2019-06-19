@@ -739,6 +739,10 @@ class ControlLoc(object):
             self.area = area
         ControlLoc.total += 1
 
+    def copy(self):
+        return ControlLoc(line=False, self.latlon, self.alt,
+               self.rate, self.area)
+
     def definition(self, line):
         """
         line : string
@@ -852,6 +856,12 @@ class HycsControl(object):
          """
         self.num_grids += 1
         self.concgrids.append(cgrid)
+
+    def add_dummy_location(self):
+        newloc = self.locs[0].copy()
+        self.locs.append(newloc)
+        self.nlocs += 1 
+        
 
     def add_location(
             self,
