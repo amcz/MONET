@@ -740,7 +740,7 @@ class ControlLoc(object):
         ControlLoc.total += 1
 
     def copy(self):
-        return ControlLoc(line=False, self.latlon, self.alt,
+        return ControlLoc(False, self.latlon, self.alt,
                self.rate, self.area)
 
     def definition(self, line):
