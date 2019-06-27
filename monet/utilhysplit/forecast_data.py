@@ -30,15 +30,15 @@ def findcycles_forecast(dstart, metdata):
     elif(metdata=="NAMHI"):
        met = "namsf.HI"
        meta = "namsa.HI"
-    metdir1=FCTDIR + '/' + dstart.strftime("%Y%m%d") + '/'
+    metdir1=FCTDIR + dstart.strftime("%Y%m%d") + '/'
     #print('<br>' + metdir1)
     cyclename = 'None'
     metnamefinal='No data found'
     for cyc, tms in zip(cycles, ctimes):
-        metfilename = 'hysplit.' + cyc + '.' + met
+        metfilename = 'hysplit.' + cyc + '.' + met + 'f'
         metname = metdir1 + metfilename
         if os.path.isfile(metname):     
-            if tms < hour:
+            if tms <= dstart.hour:
                metnamefinal = metfilename
                cyclename = str(tms) + ' UTC'
     for fs in days:
