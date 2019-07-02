@@ -15,7 +15,7 @@ from monet.utilhysplit import run_hysp_alert as rha
 #Path of ftp folder
 path_to_watch = '/pub/jpsss_upload/'
 #Creating list of current files in ftp folder
-current = os.listdir(path_to_watch)
+current = list(fi for fi in os.listdir(path_to_watch) if fi.endswith('.xml'))
 #Reading the list of files from the last iteration
 direct = '/hysplit-users/allisonr/VOLCANO/'
 with open(direct+'original_list.txt', 'r') as fs:
@@ -33,6 +33,7 @@ if added:
         out = rha.make_files(path_to_watch,add)
         rha.run_hysp(out[0],out[1])
         rha.make_traj(out[0],out[1])
+        rha.compress_kml(out[0],out[1])
         f += 1
 
 if removed:
