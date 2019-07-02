@@ -17,6 +17,7 @@ def open_xml(xmlFile):
 
 #Extracting necessary values from alert
 def get_alert_values(root):
+    wmo_id = root.summary.wmo_spacecraft_id.attrib.get('value').strip()
     alert_header = root.alert.alert_header.attrib.get('value').strip()
     alert_type = root.alert.alert_type.attrib.get('value')
     status = root.alert.status.attrib.get('value')
@@ -26,7 +27,7 @@ def get_alert_values(root):
     lon_rc = float(root.alert.lon_rc.attrib.get('value'))
     date_time = root.alert.object_date_time.attrib.get('value') #Put into datetime object
     date_time = datetime.strptime(date_time, '%Y-%m-%d %H:%M:%S')
-    return alert_header, alert_type, status, confidence, method, lat_rc, lon_rc, date_time
+    return alert_header, alert_type, status, confidence, method, lat_rc, lon_rc, date_time, wmo_id
 
 #Extracting array of nearby possible volcanoes
 def get_nearby(root):
@@ -54,7 +55,8 @@ def get_nearby(root):
 
 #Finding closest volcano (minimum distance)
 def get_closest(name, lat, lon, dist, therm, vid):
-    closest = dist.index(min(dist))
+    #closest = dist.index(min(dist))
+    closest = 1 #Using first volcano in list
     closest_name = name[closest-1]
     closest_lat = lat[closest-1]
     closest_lon = lon[closest-1]
