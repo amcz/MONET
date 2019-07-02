@@ -33,7 +33,7 @@ def get_nearby(root):
     values=[]
     for data in root.alert.volcanoes.getchildren():
         for volc in data.getchildren():
-            values.append( volc.attrib.get('value'))
+            values.append(volc.attrib.get('value'))
     i=0
     name=[]
     lat=[]
@@ -55,11 +55,12 @@ def get_nearby(root):
 #Finding closest volcano (minimum distance)
 def get_closest(name, lat, lon, dist, therm, vid):
     closest = dist.index(min(dist))
-    closest_name = name[closest]
-    closest_lat = lat[closest]
-    closest_lon = lon[closest]
-    closest_therm = therm[closest]
-    closest_vid = vid[closest] 
+    closest_name = name[closest-1]
+    closest_lat = lat[closest-1]
+    closest_lon = lon[closest-1]
+    closest_therm = therm[closest-1]
+    closest_vid = vid[closest-1] 
+    
     return closest_name, closest_lat, closest_lon, closest_therm, closest_vid
 
 
