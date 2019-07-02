@@ -25,7 +25,7 @@ def get_alert_values(root):
     lat_rc = float(root.alert.lat_rc.attrib.get('value'))
     lon_rc = float(root.alert.lon_rc.attrib.get('value'))
     date_time = root.alert.object_date_time.attrib.get('value') #Put into datetime object
-    date_time = datetime.strptime(date_time, '%Y-%m-%d %H:%M:%S').replace(second = 0)
+    date_time = datetime.strptime(date_time, '%Y-%m-%d %H:%M:%S')
     return alert_header, alert_type, status, confidence, method, lat_rc, lon_rc, date_time
 
 #Extracting array of nearby possible volcanoes
