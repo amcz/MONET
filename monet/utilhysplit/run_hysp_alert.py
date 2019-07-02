@@ -20,6 +20,8 @@ def make_files( fpath, fname):
     from monet.utilhysplit import forecast_data as fd
     from monet.util import read_csv as usgs
     from datetime import timedelta as td
+    from datetime import datetime as dtime
+    import os
 
     met_model = 'GFS0p25' 
     wdir = '/hysplit-users/allisonr/VOLCANO/Trajectory/'
@@ -38,19 +40,21 @@ def make_files( fpath, fname):
     #Calculated based on minimum distance - requires all nearby values as input
     closest = volcalert.get_closest(nearby[0], nearby[1], nearby[2], nearby[3], nearby[4], nearby[5])
     volcname = closest[0]
-    datetim = data[7].strftime('%Y%m%d%H%M')
+    datetim = data[7].strftime('%Y%m%d%H%M%S')
     pid = datetim
 
     #Read in list of Volcanoes and find vent height of closest volcano
     #used for calculating altitude
     csv = usgs.open_file(fname = '/hysplit-users/allisonr/Alice/MONET/monet/data/usgs_table.csv',delimiter = ',')
     headers = usgs.find_headers(csv)
-    this_volc = csv[csv[headers[4]] == volcname]
-    if (this_volc.empty == True):
-        csv['NAME'] = csv['NAME'].str.normalize('NFKD').str.encode('ascii', errors = 'ignore').str.decode('utf-8')
-        this_volc = csv[csv[headers[4]] == volcname]
-    alt = this_volc[headers[12]].values[0]
-
+    csv[headers[4]] = csv[headers[4]].str.normalize('NFKD').str.encode('ascii', errors = 'ignore').str.decode('utf-8')
+    if csv[headers[4]].str.contains(volcname).any():
+        this_volc = csv[csv[headers[4]].str.contains(volcname)]
+        alt = this_volc[headers[12]].values[0]
+    else:
+        volcname = 'Unknown'
+        alt = 300.0
+    
     #Find met fields necessary for the hysplit run
     #Two possible functions to gather appropriate met fields:
     #      findcycles_archive(datetime object start, datetime object end, 
@@ -75,11 +79,11 @@ def make_files( fpath, fname):
     # set the duration of the simulation (hours)
     control.run_duration = duration
     # set location of volcano
-    #control.add_location(latlon=(start_lat, start_lon), alt = alt, rate = False, area = False)
+    control.add_location(latlon=(start_lat, start_lon), alt = alt, rate = False, area = False)
     control.add_location(latlon=(start_lat, start_lon), alt = alt+1000, rate = False, area = False)
-    #control.add_location(latlon=(start_lat, start_lon), alt = alt+1500, rate = False, area = False)
+    control.add_location(latlon=(start_lat, start_lon), alt = alt+1500, rate = False, area = False)
     control.add_location(latlon=(start_lat, start_lon), alt = alt+2500, rate = False, area = False)
-    #control.add_location(latlon=(start_lat, start_lon), alt = alt+3000, rate = False, area = False)
+    control.add_location(latlon=(start_lat, start_lon), alt = alt+3000, rate = False, area = False)
     control.add_location(latlon=(start_lat, start_lon), alt = alt+5000, rate = False, area = False)
     control.add_location(latlon=(start_lat, start_lon), alt = alt+7500, rate = False, area = False)
     control.add_location(latlon=(start_lat, start_lon), alt = alt+10000, rate = False, area = False)
@@ -99,6 +103,19 @@ def make_files( fpath, fname):
     setup.read()
     setup.rename(name='SETUP.' + str(pid), working_directory=wdir)
     setup.write(verbose=True)
+
+    #Writes a MAPTEXT file, used to add more information about each eruption to gifs.
+    #Should have file nameing conention: MAPTEXT.'pid'
+    #Contains lines of text
+    
+    with open(wdir + 'MAPTEXT.CFG', 'w') as fid:
+        fid.write('HYSPLIT Trajectory Calculation for '+volcname+' Volcano\n')
+        fid.write('Line2 \n')
+        fid.write('Lat: '+str(start_lat)+'    Lon: '+str(start_lon)+'    Vent Height: '+str(alt)+' m\n')
+        fid.write('Alert Type: '+data[0]+'\n')
+        current=dtime.utcnow()
+        fid.write('Job Start: '+current.strftime('%B %d, %Y')+' at '+current.strftime('%H:%M:%S')+' UTC \n')
+        fid.close()
     
     return wdir, pid
 
@@ -116,15 +133,26 @@ def run_hysp(wdir, pid):
     return 'HYSPLIT run for '+pid+' is completed!'
 
 def make_traj(wdir, pid):
-    """ Runs trajplot.py to create figure from the tdump file created from run_hysp."""
+    """ Runs trajplot to create figure from the tdump file created from run_hysp."""
     #import trajplot
     #process = subprocess.Popen('/hysplit-users/allisonr/hysplit/trunk/exec/trajplot -itdump.'+pid+' -l6 -otraj_'+pid+'.ps -s1 -v1')
     import os
+    from monet.utilhysplit.hysplit_graf import trajplot 
     
     cwd=os.getcwd()
     os.chdir(wdir)
-    os.system('/hysplit-users/allisonr/HYSPLIT/exec/trajplot -itdump.'+pid+' -l6 -otraj_'+pid+'.ps -s1 -v1')
+    print(wdir)
+    #os.system('python /hysplit-users/allisonr/Alice/MONET/monet/utilhysplit/hysplit_graf/trajplot.py -itdump.'+pid+' -otraj_'+pid+'.ps')
+    os.system('/hysplit-users/allisonr/HYSPLIT/exec/trajplot -itdump.'+pid+' -otraj_'+pid+'.ps -a3 -A1 -l6 -s1 -v1 -k2 +n')
+    os.system('cp MAPTEXT.CFG MAPTEXT.'+pid)
 
     return 'Figure called traj_'+pid+'.ps is created!'
     
-    
+def compress_kml(wdir, pid):
+    import os
+    """ Compresses kml files generated by trajplot into kmz files. """
+    cwd = os.getcwd()
+    os.chdir(wdir)
+    os.system('zip traj_'+pid+'.kmz traj_'+pid+'_01.kml')
+
+    return 'kmz file called traj_'+pid+'.kmz is created!'
