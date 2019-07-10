@@ -10,6 +10,7 @@ import time
 import os
 import re
 import json
+import numpy as np
 from monet.utilhysplit import run_hysp_alert as rha
 
 #Path of ftp folder
@@ -24,9 +25,10 @@ with open(direct+'original_list.txt', 'r') as fs:
 added = [fs for fs in current if not fs in original]
 removed = [fs for fs in original if not fs in current]
 
+original1 = original
 #If files were added, loop for all files added 
 if added:
-    print('Added:', ', '.join(added))
+    print('Added:', ',\n '.join(added),'\n')
     f = 0
     while f < len(added):
         add = ''.join(added[f])   #Convert to string from list
@@ -34,18 +36,32 @@ if added:
         rha.run_hysp(out[0],out[1])
         rha.make_traj(out[0],out[1])
         rha.compress_kml(out[0],out[1])
+        #Check if trajectory figure is generated
+        trajfile = rha.check_for_figs(out[0],out[1])
+        if trajfile == True:
+            print('Trajectory file does exist!')
+            original1.append(add)
         f += 1
 
 if removed:
-    print('Files removed:',', '.join(removed))
+    print('Files removed:',', \n'.join(removed),'\n')
+    g = 0
+    while g < len(removed):
+        remov = ''.join(removed[g])
+        original1.remove(remov)
+        g += 1
 
-if current == original:
+if added or removed:
+    #Write current list of files that successfully created trajectory figs to original_list2.txt
+    print('Updates recorded to file!')
+    with open(direct+'/original_list2.txt', 'w') as fis:
+                fis.write(json.dumps(original1))
+    os.system('mv '+direct+'original_list2.txt '+direct+'original_list.txt')
+else:
     print('No updates to '+path_to_watch+' folder!')
 
-#Write current list of files to original_list.txt - update for next iteration
-with open(direct+'/original_list2.txt', 'w') as fis:
-    fis.write(json.dumps(current))
 
-os.system('mv '+direct+'original_list2.txt '+direct+'original_list.txt')
+
+
 
 
