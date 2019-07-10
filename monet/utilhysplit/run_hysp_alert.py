@@ -2,6 +2,8 @@
 #reads volcat alert xml file, creates hysplit traj. control files, renames setup file
 #runs hysplit with created control file
 #makes trajplot from tdump file
+#IF tajectory plot figures are not created, the alert filename is not added to the list
+#and the trajectory is initiated again at the next call of this program
 
 def make_files( fpath, fname):
     """ Makes CONTROL and SETUP files from information in
@@ -41,7 +43,8 @@ def make_files( fpath, fname):
     closest = volcalert.get_closest(nearby[0], nearby[1], nearby[2], nearby[3], nearby[4], nearby[5])
     volcname = closest[0]
     datetim = data[7].strftime('%Y%m%d%H%M%S')
-    pid = datetim
+    wmo_id = data[8]
+    pid = datetim+'_'+wmo_id
 
     #Read in list of Volcanoes and find vent height of closest volcano
     #used for calculating altitude
@@ -102,7 +105,7 @@ def make_files( fpath, fname):
     setup=hcontrol.NameList(fname='SETUP.Reventador.20190425', working_directory=wdir)
     setup.read()
     setup.rename(name='SETUP.' + str(pid), working_directory=wdir)
-    setup.write(verbose=True)
+    setup.write(verbose=False)
 
     #Writes a MAPTEXT file, used to add more information about each eruption to gifs.
     #Should have file nameing conention: MAPTEXT.'pid'
@@ -127,7 +130,7 @@ def run_hysp(wdir, pid):
     cwd=os.getcwd()
     os.chdir(wdir)
     cwd2=os.getcwd()
-    print('Current wdir is: '+cwd2)
+#    print('Current wdir is: '+cwd2)
     os.system('/hysplit-users/allisonr/HYSPLIT/exec/hyts_std ' +pid)
 
     return 'HYSPLIT run for '+pid+' is completed!'
@@ -141,7 +144,7 @@ def make_traj(wdir, pid):
     
     cwd=os.getcwd()
     os.chdir(wdir)
-    print(wdir)
+    #print(wdir)
     #os.system('python /hysplit-users/allisonr/Alice/MONET/monet/utilhysplit/hysplit_graf/trajplot.py -itdump.'+pid+' -otraj_'+pid+'.ps')
     os.system('/hysplit-users/allisonr/HYSPLIT/exec/trajplot -itdump.'+pid+' -otraj_'+pid+'.ps -a3 -A1 -l6 -s1 -v1 -k2 +n')
     os.system('cp MAPTEXT.CFG MAPTEXT.'+pid)
@@ -156,3 +159,13 @@ def compress_kml(wdir, pid):
     os.system('zip traj_'+pid+'.kmz traj_'+pid+'_01.kml')
 
     return 'kmz file called traj_'+pid+'.kmz is created!'
+
+def check_for_figs(wdir, pid):
+    import os
+    """ Check to see if trajectory figure was created. """
+    cwd = os.getcwd()
+    os.chdir(wdir)
+    trajfile = os.path.isfile('traj_'+pid+'.ps')
+
+    return trajfile
+
