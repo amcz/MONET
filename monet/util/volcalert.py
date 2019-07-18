@@ -9,7 +9,7 @@ from datetime import datetime
 
 #Opening xml file
 def open_xml(xmlFile):
-    #print(xmlFile)
+    """Opens the xml alert file from VOLCAT"""
     with open(xmlFile) as f:
         xml = f.read()
         root = obj.fromstring(xml)    
@@ -17,6 +17,16 @@ def open_xml(xmlFile):
 
 #Extracting necessary values from alert
 def get_alert_values(root):
+    """Finds important alert info, returned in this order:
+    1. Alert header
+    2. Alert type
+    3. Alert status
+    4. Alert confidence
+    5. Alert latitude (of radiative center)
+    6. Alert longitude (of radiative center)
+    7. Alert date and time (datetime object)
+    8. Satellite identifier number"""
+
     wmo_id = root.summary.wmo_spacecraft_id.attrib.get('value').strip()
     alert_header = root.alert.alert_header.attrib.get('value').strip()
     alert_type = root.alert.alert_type.attrib.get('value')
@@ -31,6 +41,14 @@ def get_alert_values(root):
 
 #Extracting array of nearby possible volcanoes
 def get_nearby(root):
+    """Finds information for the nearby volcanoes to the radiative center lat/lon
+    Returned in this order:
+    1. List of nearby volcano names
+    2. List of nearby volcano latitudes
+    3. List of nearby volcano longitudes
+    4. List of nearby volcano distances from radiative center
+    5. List of nearby volcano termal anomaly indications
+    6. List of nearby volcano ID numbers"""
     values=[]
     for data in root.alert.volcanoes.getchildren():
         for volc in data.getchildren():
@@ -55,7 +73,13 @@ def get_nearby(root):
 
 #Finding closest volcano (minimum distance)
 def get_closest(name, lat, lon, dist, therm, vid):
-    #closest = dist.index(min(dist))
+    """Extracts information for the closest volcano to the radiative center.
+    Uses first volcano in "nearby volcanoes" list. Values are returned in this order:
+    1. Closest volcano name
+    2. Closest volcano latitude
+    3. Closest volcano longitude
+    4. Closest volcano thermal indicator
+    5. Closest volcano ID number"""
     closest = 1 #Using first volcano in list
     closest_name = name[closest-1]
     closest_lat = lat[closest-1]
@@ -67,9 +91,51 @@ def get_closest(name, lat, lon, dist, therm, vid):
 
 #Finding VAAC region information
 def get_vaac(root):
+    """Returns the VAAC region of the alert"""
     vaac = root.alert.vaac_region.attrib.get('value')
     return vaac
     
+#Extract plume height
+#Must be an ash alert for this info!
+def get_height(root):
+    """Extracts the ash plume height - only valid for ash alerts!
+    Values returned are in this order:
+    1. Maximum ash height (meters)
+    2. Maximum ash height (feet)
+    3. Tropopause height (meters)
+    4. Tropopause height (feet)"""
+    hgt_m = root.alert.max_height.attrib.get('value')
+    hgt_ft = root.alert.max_height_feet.attrib.get('value')
+    tropohgt_m = root.alert.tropo_height.attrib.get('value')
+    tropohgt_ft = root.alert.tropo_height_feet.attrib.get('value')
+    return hgt_m, hgt_ft, tropohgt_m, tropohgt_ft
 
+#Extract ash mass loading
+def get_mass(root):
+    """Extracts the total ash mass loading - only valid for ash alerts!
+    Values returned are in this order:
+    1. Total ash mass
+    2. Total ash mass unit"""
+    mass = root.alert.total_mass.attrib.get('value')
+    mass_unit = root.alert.total_mass.attrib.get('units')
+    return mass, mass_unit
 
+#Extract ash effective radius
+def get_radius(root):
+    """Extracts the median ash effective radius - only valid for ash alerts!
+    Values returned are in this order:
+    1. Median ash effective radus
+    2. Median ash effective radius unit"""
+    effrad = root.alert.effective_radius.attrib.get('value')
+    effrad_unit = root.alert.effective_radius.attrib.get('units')
+    return effrad, effrad_unit
 
+#Extract ash cloud total area
+def get_area(root):
+    """Extracts the ash cloud total area
+    Values returned are in this order"
+    1. Total ash area
+    2. Total ash area unit"""
+    area = root.alert.total_area.attrib.get('value')
+    area_unit = root.alert.total_area.attrib.get('units')
+    return area, area_unit
