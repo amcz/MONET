@@ -9,7 +9,7 @@ from datetime import datetime
 
 #Opening xml file
 def open_xml(xmlFile):
-    print(xmlFile)
+    #print(xmlFile)
     with open(xmlFile) as f:
         xml = f.read()
         root = obj.fromstring(xml)    
@@ -65,7 +65,11 @@ def get_closest(name, lat, lon, dist, therm, vid):
     
     return closest_name, closest_lat, closest_lon, closest_therm, closest_vid
 
-
+#Finding VAAC region information
+def get_vaac(root):
+    vaac = root.alert.vaac_region.attrib.get('value')
+    return vaac
+    
 
 
 
