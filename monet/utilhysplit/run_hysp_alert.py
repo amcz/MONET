@@ -44,6 +44,7 @@ def make_files( fpath, fname):
     volcname = closest[0]
     datetim = data[7].strftime('%Y%m%d%H%M%S')
     wmo_id = data[8]
+    vaac = volcalert.get_vaac(alerts)
     pid = datetim+'_'+wmo_id
 
     #Read in list of Volcanoes and find vent height of closest volcano
@@ -115,7 +116,7 @@ def make_files( fpath, fname):
         fid.write('HYSPLIT Trajectory Calculation for '+volcname+' Volcano\n')
         fid.write('Line2 \n')
         fid.write('Lat: '+str(start_lat)+'    Lon: '+str(start_lon)+'    Vent Height: '+str(alt)+' m\n')
-        fid.write('Alert Type: '+data[0]+'\n')
+        fid.write('Alert Type: '+data[0]+'     VAAC: '+str(vaac)+'\n')
         current=dtime.utcnow()
         fid.write('Job Start: '+current.strftime('%B %d, %Y')+' at '+current.strftime('%H:%M:%S')+' UTC \n')
         fid.close()
