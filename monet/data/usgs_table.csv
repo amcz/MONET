@@ -587,17 +587,17 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 0802-021,08,02,-021,Yokoate-jima,Ryukyu Is,Historical,28.797,N,,128.997,E,495,Stratovolcanoes,D3,S0
 0802-022,08,02,-022,Akuseki-jima,Ryukyu Is,Holocene?,29.461,N,,129.597,E,584,Stratovolcanoes,?,S0
 0802-02=,08,02,-02-,Iwo-Tori-shima,Ryukyu Is,Historical,27.877,N,,128.224,E,212,Complex volcano,D2,S1
-0802-03=,08,02,-03-,Suwanose-jima,Ryukyu Is,Historical,29.635,N,,129.716,E,799,Stratovolcanoes,D1,S1
+0802-03=,08,02,-03-,Suwanosejima,Ryukyu Is,Historical,29.635,N,,129.716,E,799,Stratovolcanoes,D1,S1
 0802-041,08,02,-041,Kogaja-jima,Ryukyu Is,Holocene?,29.879,N,,129.625,E,301,Lava domes,?,S0
-0802-043,08,02,-043,Kuchino-shima,Ryukyu Is,Radiocarbon,29.964,N,,129.927,E,628,Stratovolcanoes,D6,S0
-0802-04=,08,02,-04-,Nakano-shima,Ryukyu Is,Historical,29.856,N,,129.859,E,979,Stratovolcanoes,D2,S0
-0802-05=,08,02,-05-,Kuchinoerabu-jima,Ryukyu Is,Historical,30.440,N,,130.219,E,657,Stratovolcanoes,D2,S2
+0802-043,08,02,-043,Kuchinoshima,Ryukyu Is,Radiocarbon,29.964,N,,129.927,E,628,Stratovolcanoes,D6,S0
+0802-04=,08,02,-04-,Nakanoshima,Ryukyu Is,Historical,29.856,N,,129.859,E,979,Stratovolcanoes,D2,S0
+0802-05=,08,02,-05-,Kuchinoerabujima,Ryukyu Is,Historical,30.440,N,,130.219,E,657,Stratovolcanoes,D2,S2
 0802-06=,08,02,-06-,Kikai,Ryukyu Is,Historical,30.789,N,,130.308,E,704,Caldera,D1,S1
 0802-07=,08,02,-07-,Ibusuki Volc Field,Kyushu-Japan,Historical,31.22,N,*,130.57,E,922,Calderas,D6,S0
 0802-081,08,02,-081,Sumiyoshi-ike,Kyushu-Japan,Radiocarbon,31.768,N,,130.594,E,15,Maars,D7,M0
 0802-08=,08,02,-08-,Sakura-jima,Kyushu-Japan,Historical,31.585,N,,130.657,E,1117,Stratovolcano,D1,S1
 0802-091,08,02,-091,Fukue-jima,Kyushu-Japan,Tephrochronology,32.653,N,,128.851,E,317,Shield volcanoes,D7,M0
-0802-09=,08,02,-09-,Kirishima,Kyushu-Japan,Historical,31.931,N,,130.864,E,1700,Shield volcano,D1,S1
+0802-09=,08,02,-09-,Kirishimayama,Kyushu-Japan,Historical,31.931,N,,130.864,E,1700,Shield volcano,D1,S1
 0802-10=,08,02,-10-,Unzen,Kyushu-Japan,Historical,32.757,N,,130.294,E,1500,Complex volcano,D2,S1
 0802-11=,08,02,-11-,Aso,Kyushu-Japan,Historical,32.881,N,,131.106,E,1592,Caldera,D1,M1
 0802-12=,08,02,-12-,Kuju,Kyushu-Japan,Historical,33.083,N,,131.251,E,1791,Stratovolcanoes,D2,M1
@@ -650,7 +650,7 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 0804-01=,08,04,-01-,Oshima,Izu Is-Japan,Historical,34.721,N,,139.398,E,764,Stratovolcano,D2,S1
 0804-02=,08,04,-02-,Nii-jima,Izu Is-Japan,Historical,34.393,N,,139.273,E,432,Lava domes,D6,S0
 0804-03=,08,04,-03-,Kozu-shima,Izu Is-Japan,Historical,34.216,N,,139.156,E,572,Lava domes,D6,S0
-0804-041,08,04,-041,Mikura-jima,Izu Is-Japan,Tephrochronology,33.871,N,,139.605,E,851,Stratovolcano,D7,S0
+0804-041,08,04,-041,Mikurajima,Izu Is-Japan,Tephrochronology,33.871,N,,139.605,E,851,Stratovolcano,D7,S0
 0804-042,08,04,-042,Kurose Hole,Izu Is-Japan,Holocene?,33.40,N,,139.68,E,-107,Submarine volcano,?,U0
 0804-04=,08,04,-04-,Miyake-jima,Izu Is-Japan,Historical,34.079,N,,139.529,E,815,Stratovolcano,D1,M2
 0804-05=,08,04,-05-,Hachijo-jima,Izu Is-Japan,Historical,33.13,N,,139.769,E,854,Stratovolcanoes,D5,M0
@@ -718,10 +718,10 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 0805-09=,08,05,-09-,Shiretoko-Iwo-zan,Hokkaido-Japan,Historical,44.131,N,,145.165,E,1563,Stratovolcano,D2,S0
 0900-01=,09,00,-01-,Golovnin,Kuril Is,Historical,43.841,N,,145.509,E,543,Caldera,D3,S0
 0900-021,09,00,-021,Smirnov,Kuril Is,Holocene,44.420,N,,146.135,E,1189,Stratovolcano,U,S0
-0900-02=,09,00,-02-,Mendeleev,Kuril Is,Historical,43.976,N,,145.736,E,888,Stratovolcano,D3,S0
+0900-02=,09,00,-02-,Raususan (Mendeleev),Kuril Is,Historical,43.976,N,,145.736,E,888,Stratovolcano,D3,S0
 0900-03=,09,00,-03-,Tiatia,Kuril Is,Historical,44.351,N,,146.256,E,1819,Stratovolcano,D2,M0
 0900-041,09,00,-041,Lvinaya Past,Kuril Is,Radiocarbon,44.608,N,,146.994,E,528,Stratovolcano,D7,S0
-0900-04=,09,00,-04-,Berutarube,Kuril Is,Holocene,44.459,N,,146.936,E,1221,Stratovolcano,U,S0
+0900-04=,09,00,-04-,Berutarubesan (Berutarube),Kuril Is,Holocene,44.459,N,,146.936,E,1221,Stratovolcano,U,S0
 0900-05=,09,00,-05-,Atsonupuri,Kuril Is,Historical,44.805,N,,147.135,E,1206,Stratovolcano,D2,S0
 0900-06-,09,00,-06-,Bogatyr Ridge,Kuril Is,Holocene,44.833,N,,147.342,E,1634,Stratovolcano,U,S0
 0900-061,09,00,-061,Unnamed,Kuril Is,Uncertain,45.03,N,,147.208,E,-930,Submarine volcano,?,U0
@@ -730,7 +730,7 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 0900-091,09,00,-091,Golets-Tornyi Group,Kuril Is,Holocene?,45.25,N,,148.35,E,442,Pyroclastic cones,?,S0
 0900-09=,09,00,-09-,Chirip,Kuril Is,Historical,45.338,N,,147.925,E,1587,Stratovolcanoes,D3,M0
 0900-10=,09,00,-10-,Medvezhia,Kuril Is,Historical,45.387,N,,148.843,E,1125,Somma volcano,D2,S0
-0900-11-,09,00,-11-,Demon,Kuril Is,Holocene,45.50,N,,148.85,E,1205,Stratovolcano,U,S0
+0900-11-,09,00,-11-,Rakkibetsudake [Demon],Kuril Is,Holocene,45.50,N,,148.85,E,1205,Stratovolcano,U,S0
 0900-111,09,00,-111,Ivao Group,Kuril Is,Holocene,45.77,N,,149.68,E,1426,Cinder cones,U,S0
 0900-112,09,00,-112,Rudakov,Kuril Is,Holocene?,45.88,N,,149.83,E,542,Stratovolcano,?,S0
 0900-113,09,00,-113,Tri Sestry,Kuril Is,Holocene?,45.93,N,,149.92,E,998,Stratovolcano,?,S0
@@ -804,7 +804,7 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 1000-125,10,00,-125,Akademia Nauk,Kamchatka,Historical,53.98,N,,159.45,E,1180,Stratovolcanoes,D2,S0
 1000-12=,10,00,-12-,Zhupanovsky,Kamchatka,Historical,53.590,N,,159.147,E,2958,Compound volcano,D2,S0
 1000-13=,10,00,-13-,Karymsky,Kamchatka,Historical,54.05,N,,159.45,E,1536,Stratovolcano,D1,S1
-1000-14=,10,00,-14-,Maly Semiachik,Kamchatka,Historical,54.13,N,,159.67,E,1560,Caldera,D2,M0
+1000-14=,10,00,-14-,Maly Semyachik,Kamchatka,Historical,54.13,N,,159.67,E,1560,Caldera,D2,M0
 1000-15=,10,00,-15-,Bolshoi Semiachik,Kamchatka,Radiocarbon,54.32,N,,160.02,E,1720,Stratovolcanoes,D7,M0
 1000-16-,10,00,-16-,Taunshits,Kamchatka,Radiocarbon,54.53,N,,159.80,E,2353,Stratovolcano,D7,S0
 1000-17=,10,00,-17-,Uzon,Kamchatka,Radiocarbon,54.50,N,,159.97,E,1617,Calderas,D7,S0
@@ -823,7 +823,7 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 1000-251,10,00,-251,Kamen,Kamchatka,Holocene,56.02,N,,160.593,E,4585,Stratovolcano,U,M0
 1000-25=,10,00,-25-,Bezymianny,Kamchatka,Historical,55.978,N,,160.587,E,2882,Stratovolcano,D1,S2
 1000-261,10,00,-261,Ushkovsky,Kamchatka,Historical,56.070,N,,160.470,E,3943,Compound volcano,D3,M0
-1000-26=,10,00,-26-,Kliuchevskoi,Kamchatka,Historical,56.057,N,,160.638,E,4835,Stratovolcano,D1,M1
+1000-26=,10,00,-26-,Klyuchevskoy,Kamchatka,Historical,56.057,N,,160.638,E,4835,Stratovolcano,D1,M1
 1000-271,10,00,-271,Piip,Kamchatka-E of,Tephrochronology,55.42,N,,167.33,E,-300,Submarine volcano,D7,U0
 1000-272,10,00,-272,Khangar,Kamchatka,Radiocarbon,54.75,N,,157.38,E,2000,Stratovolcano,D5,S0
 1000-273,10,00,-273,Cherpuk Group,Kamchatka,Radiocarbon,55.55,N,,157.47,E,1868,Pyroclastic cones,D7,S0
@@ -1131,7 +1131,7 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 1401-06=,14,01,-06-,Michoacán-Guanajuato,México,Historical,19.85,N,*,101.75,W,3860,Cinder cones,D2,M2
 1401-07-,14,01,-07-,"Toluca, Nevado de",México,Radiocarbon,19.108,N,, 99.758,W,4680,Stratovolcano,D7,S2
 1401-081,14,01,-081,Papayo,México,Holocene,19.308,N,, 98.70,W,3600,Lava dome,U,S0
-1401-082,14,01,-082,Iztaccíhuatl,México,Holocene,19.179,N,, 98.642,W,5230,Stratovolcano,U,S0
+1401-082,14,01,-082,Iztaccihuatl,México,Holocene,19.179,N,, 98.642,W,5230,Stratovolcano,U,S0
 1401-08=,14,01,-08-,Chichinautzin,México,Radiocarbon,19.08,N,*, 99.13,W,3930,Volcanic field,D6,M0
 1401-091,14,01,-091,"Malinche, La",México,Radiocarbon,19.231,N,, 98.032,W,4461,Stratovolcano,D7,S0
 1401-092,14,01,-092,Serdán-Oriental,México,Holocene,19.27,N,*, 97.47,W,3485,Tuff cones,U,S0
