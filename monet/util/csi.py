@@ -1,18 +1,13 @@
-#!/n-home/alicec/anaconda/bin/python
-# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
-from math import *
+#csi.py
+#Calculations various statistics
+import math
 import sys 
-#from scipy.io import netcdf
-#from pylab import *
 import numpy as np
 import matplotlib.pyplot as plt
 import string
 import datetime
-#import shapely.geometry as sgeo
-#from hysplit import *
 from itertools import permutations
 import time
-
 
 """
 routines to help calculates critical success index by a point by point comparison.
@@ -24,6 +19,7 @@ get_area_ra
 calc_fss  (fraction skill score)
 find_threshold
 mask_threshold
+trim_arrays
 calc_csi (critical success index, aka figure of merit in space)
 """
 def match_ra(ra1, lat1, lon1, ra2, lat2, lon2, missing_value=0, verbose=1):
@@ -152,45 +148,55 @@ def match_ra(ra1, lat1, lon1, ra2, lat2, lon2, missing_value=0, verbose=1):
        print('Shapes of output arrays ra1, ra2, lat, lon' , ra1.shape, ra2.shape, latlongrid[0].shape, latlongrid[1].shape)
     return latlongrid , ra1 , ra2
 
-def get_area_ra(lat, lon, radius=6378.137):
+def get_area_ra(lat, lon, radius=6378137,verbose = False):
     """Input is a 2d latitude numpy array and a 2d longitude numpy array. 
-       Output is array of same size with corresponding area (km2) of each grid cell.
+       Output is array of same size with corresponding area (m2) of each grid cell.
        Converts degrees to meters using a radius of 6378.137 km. Can  use the alt keyword to change this radius.
        Assumes grid is spaced equally in degrees lat and degrees lon"""
+    from math import pi, cos
 
     d2km = radius * pi / 180.0     #convert degree latitude to meters. Assumes Earth radius of 6378137 meters.
     d2r =  pi/180.0             #convert degrees to radians
+    lat_radians = lat * d2r
 
-    lat_space =  lat[1][0] - lat[0][0]
-    lon_space =  lon[0][1] - lon[0][0]
-    if lat_space == 0 or lon_space==0:
+    lat_space =  abs(lat[1][0] - lat[0][0])
+    lon_space =  abs(lon[0][1] - lon[0][0])
+    if lat_space == 0 or lon_space == 0:
        print('WARNING: lat or lon spacing is zero')
-    area = lat_space*d2km * lon_space * d2km * cos(d2r * lat)
-    #print 'Area shape', area.shape , lat.shape , np.amin(area) , np.amax(area) 
+    shape = np.shape(lat)
+    area = np.zeros(shape)
+    a = 0
+    while a < shape[0]:
+        b = 0
+        while b < shape[1]:
+            area[a,b] = lat_space * d2km * lon_space * d2km * cos(lat_radians[a,b])
+            b += 1
+        a += 1
+    if verbose == True:
+        print ('Area: ', area.shape , lat.shape , np.amin(area) , np.amax(area))
     return area
 
 
-def calc_fss(ra1, ra2, nodata_value='', threshold=0, verbose=0, sn=[0,5]):
-   """Calculates the fraction skill score (fss) 
-       See Robers and Lean (2008) Monthly Weather Review
-       and Schwartz et al (2010) Weather and Forecasting
-       for more information.
+def calc_fss(ra1, ra2, nodata_value='', threshold = 0, verbose = 0, sn = [0,5], plot_fractions = False):
+   """ Calculates the fraction skill score (fss) 
+   See Robers and Lean (2008) Monthly Weather Review
+   and Schwartz et al (2010) Weather and Forecasting for more information.
        
-       ra1 is observations/satellite
-       ra2 is the forecast/model
-       threshold = value for data threshold
-       sn is the number of pixels (radius) to use in fractions calculation
-            default is to use 1, 3, 5, 7, 9 pixels size squares
-   """
-   fss_list = []
-   if (verbose == 1):
-       print('RANGE' , list(range(sn[0],sn[1])))
+   ra1 is observations/satellite
+   ra2 is the forecast/model
+   threshold = value for data threshold
+   sn is the number of pixels (radius) to use in fractions calculation
+   (default is to use 1, 3, 5, 7, 9 pixels size squares) """
+
+   fss_list = []    #Initialize fss array
+   if (verbose == 1):    #Prints the grid box range for analysis
+       print('RANGE' , list(range(sn[0],sn[1])))    #Size of observation array
    bigN = ra1.size
    # create binary fields
-   mra1 = mask_threshold(ra1, threshold = 0)
+   mra1 = mask_threshold(ra1, threshold = threshold)
    mra2 = mask_threshold(ra2, threshold = threshold)
    for sz in range(sn[0],sn[1]):
-       # e.g. for sz=3, ijrange=[-3,-2,-1,0,1,2,3]
+       # e.g. for sz=3, ijrange=[-2,-1,0,1,2]
        ijrange = list(range(-1*sz, sz+1))
        print('ijrange: ', ijrange)
        # li will be coordinates of all the points in the ra.
@@ -206,9 +212,8 @@ def calc_fss(ra1, ra2, nodata_value='', threshold=0, verbose=0, sn=[0,5]):
        if (verbose == 1):
            print('square size ' , sz*2+1 , square_size)
            print(ra1.shape)
-       
        # total number of above threshold points.
-       print('SUMS' , mra1.sum() , mra2.sum())
+           print('SUMS' , mra1.sum().values , mra2.sum().values)
        icol = ra1.shape[1]
        irow = ra1.shape[0]
        maxrow = irow
@@ -255,12 +260,11 @@ def calc_fss(ra1, ra2, nodata_value='', threshold=0, verbose=0, sn=[0,5]):
        print(' ')
    return fss_list
 
-def find_threshold(ra1, ra2, nodata_value=None):
-    """
-       Base threshold on matching number of pixels in observations.
-       ra1 is the satellite data.
-       ra2 is model data"""
-    mask1 = mask_threshold(ra1, threshold=0)
+def find_threshold(ra1, ra2, nodata_value = None):
+    """Base threshold on matching number of pixels in observations.
+    ra1 is the satellite data.
+    ra2 is model data"""
+    mask1 = mask_threshold(ra1, threshold = 0)
     #numpixels = mask1.size - mask1.sum()
     numpixels = mask1.sum()
     list2 = np.copy(ra2)
@@ -282,12 +286,12 @@ def find_threshold(ra1, ra2, nodata_value=None):
     print(list2.size  , mask2.sum() , np.min(list2[vpi]))
     return list2[numpixels]
 
-def mask_threshold(ra1, threshold = 0):
-    """input array and threshold. 
-        Returns array with 1's where value is above threshold, and 0 otherwise"""
-    vp1 = np.where(ra1 > threshold)
-    mask1 = np.zeros_like(ra1)
-    mask1[vp1] = 1
+def mask_threshold(ra1, threshold = 0.):
+    """input array. 
+        Returns array with 1's where data above threshold
+        and 0. if below or equal to threshold (nan = 0.)  """
+    mask = ra1.fillna(0.)
+    mask1 = mask.where(mask <= threshold, 1.)
     return mask1
 
 def trim_arrays(mask1, mask2, sn=[0,5]):
@@ -314,7 +318,7 @@ def trim_arrays(mask1, mask2, sn=[0,5]):
 
     return trim1, trim2, trimboth1, trimboth2
 
-def calc_csi(ra1, ra2, area=None, nodata_value='', threshold=0, verbose=0):
+def calc_csi(ra1, ra2, area=None, nodata_value='', threshold = 0., verbose=0.):
     """ra1 and ra2 need to be on the same grid. 
         See monet.remap_nearest or monet.remap_xesmf to remap arrays.
         ra1 = observations/satellite
@@ -323,24 +327,15 @@ def calc_csi(ra1, ra2, area=None, nodata_value='', threshold=0, verbose=0):
         nodata_value = flag for expanded array grid cells created if ash near boundary
         threshold = value for data threshold
         CSI equation: hits / (hits + misses + false alarms)"""
-    #ra1 = ra1.load()
-    #ra2 = ra2.load()
+    
     area=np.array(area)
     #Creating a csihash disctionary
     csihash = {}
-    #vptest = np.where(logical_and(ra1 > 0 , ra1 <= threshold))
-    #if (verbose == 1):
-    #    print('TEST VPTEST ' , threshold , vptest)
-
+    
     #Converting ra1 and ra2 to arrays of 0's and 1's (1 with values, 0 no values)
-    mask1 = mask_threshold(ra1, threshold = 0)
-    if (threshold != 0):
-       vp2 = np.where(ra2 >= threshold)
-       mask2 = ra2[:] * 0
-       mask2[vp2] = 1
-    else:
-       mask2 = mask_threshold(ra2, threshold = 0)
-
+    mask1 = mask_threshold(ra1, threshold = threshold)
+    mask2 = mask_threshold(ra2, threshold = threshold)
+       
     #Calculating hits (matchra), misses (onlyra1), false alarms (onlyra2) for CSI calculation
     matchra = mask2 * mask1  #returns array with ones where the two arrays both have valid values.
     onlyra1 = mask1 - matchra  #returns array with ones where ra1 has valid values and ra2 does not.
@@ -350,40 +345,36 @@ def calc_csi(ra1, ra2, area=None, nodata_value='', threshold=0, verbose=0):
     csihash['ra1'] = onlyra1
     csihash['ra2'] = onlyra2
 
-    allra = matchra + onlyra1 + onlyra2 ##ra with 1's in union. 0's where both are 0. (THIS ISNT TRUE)
-    #allra would have 3 at union, 1 at onlyra1, 1 at onlyra2, and 0 where both are 0, right???
+    #Why calculate this? - not used in anyting...
+    allra = matchra + onlyra1 + onlyra2 
+    #returns array with 1's at union, 1's when only in ra1, 1's when only in ra2 and 0's where no data
     vpi = np.where(allra == 1) ## Why is this necessary?
     ##Find pattern correlation (from Zidikheri and Potts) doesn't make sense to me.
-    totalpts = matchra.sum() + onlyra1.sum() + onlyra2.sum()
+    totalpts2 = matchra.sum() + onlyra1.sum() + onlyra2.sum() ###Not sure why this is important###
     totalpts = mask2.shape[0] * mask2.shape[1] 
-    ra1ave = (onlyra1.sum() + matchra.sum() ) / float(totalpts)
-    ra2ave = (onlyra2.sum() + matchra.sum() ) / float(totalpts)
-    #ra1corr = (mask1 - ra1ave) * allra
-    #ra2corr = (mask2 - ra2ave) * allra
-    ra1corr = (mask1 - ra1ave) 
-    ra2corr = (mask2 - ra2ave)
-    norm =((ra1corr *ra1corr).sum())**0.5 * ((ra2corr*ra2corr).sum())**0.5 
-    pcorr = (ra1corr * ra2corr).sum()  / norm
-    print('PCORR' , pcorr) 
-    print('ra1ave (obs)' ,  ra1ave) 
-    print('ra2ave (calc)' , ra2ave, end=' ') 
-    print('NORM' , norm , 'ra1corr*ra2corr' ,  (ra1corr *ra2corr).sum())
-#    print totalpts, mask1.shape
-    print(mask1.sum(), mask2.sum(), np.max(ra1corr), np.min(ra1corr))
 
-    ra1ave = 0
-    ra2ave = 0
-    ra1corr = (mask1 - ra1ave) 
+    ra1ave = (onlyra1.sum() + matchra.sum() ) / float(totalpts) # Calc average for ra1
+    ra2ave = (onlyra2.sum() + matchra.sum() ) / float(totalpts) # Calc average for ra2
+    
+    ra1corr = (mask1 - ra1ave)   #Part of Pearson Correlation Coefficient calculation
     ra2corr = (mask2 - ra2ave)
-    norm =((ra1corr *ra1corr).sum())**0.5 * ((ra2corr*ra2corr).sum())**0.5 
+    #Calculating denominator or Pearson Correlation Coefficient calculation
+    norm =(((ra1corr *ra1corr).sum())**0.5) * (((ra2corr*ra2corr).sum())**0.5)
     pcorr = (ra1corr * ra2corr).sum()  / norm
-    print('PCORR (uncentered)' , pcorr)
-    #plt.imshow(mask1)
-    #plt.show()
-    #plt.imshow(mask2)
-    #plt.show()
 
-    #pcorr=-999 
+    print('PCORR' , pcorr.values) 
+    print('ra1ave (obs)' ,  ra1ave.values) 
+    print('ra2ave (calc)' , ra2ave.values, end=' ') 
+    print('NORM' , norm.values , 'ra1corr*ra2corr' ,  (ra1corr *ra2corr).sum().values)
+    
+    ra1ave2 = 0
+    ra2ave2 = 0
+    ra1corr2 = (mask1 - ra1ave2) 
+    ra2corr2 = (mask2 - ra2ave2)
+    norm2 =(((ra1corr2 *ra1corr2).sum())**0.5) * (((ra2corr2*ra2corr2).sum())**0.5)
+    pcorr2 = (ra1corr2 * ra2corr2).sum()  / norm2
+    print('PCORR (uncentered)' , pcorr2.values)
+    
     ##Find where data arrays have no information.
     if nodata_value != '':
        vpND = np.where(logical_or(ra1 == nodata_value , ra2==nodata_value))
@@ -391,29 +382,32 @@ def calc_csi(ra1, ra2, area=None, nodata_value='', threshold=0, verbose=0):
        maskND[vpND] = 1
        vp_ra1ND = np.where(logical_and(maskND==1 , onlyra1==1))     
        if vp_ra1ND[0] != []:  
-          onlyra1[vp_ra1ND] = 0
+           onlyra1[vp_ra1ND] = 0
        vp_ra2ND = np.where(logical_and(maskND==1 , onlyra2==1))     
        if vp_ra2ND[0] != []:  
-          onlyra2[vp_ra2ND] = 0
+           onlyra2[vp_ra2ND] = 0
 
     if area.shape == matchra.shape:
-       csihash['CSI'] = (matchra*area).sum() / ((matchra*area).sum() + (onlyra1*area).sum() + (onlyra2*area).sum())
-       csihash['POD'] = (matchra*area).sum() / ((matchra*area).sum() + (onlyra1*area).sum())
-       csihash['FAR'] = (onlyra2*area).sum() / ((matchra*area).sum() + (onlyra2*area).sum())
-       if verbose ==1:
-         print('used area')
-         print((matchra*area).sum() , (onlyra1*area).sum() , (onlyra2*area).sum())
-         print('CSI POD FAR' , csihash['CSI'] , csihash['POD'] , csihash['FAR'])
+        csihash['CSI'] = (matchra*area).sum() / ((matchra*area).sum() + (onlyra1*area).sum() + (onlyra2*area).sum())
+        csihash['POD'] = (matchra*area).sum() / ((matchra*area).sum() + (onlyra1*area).sum())
+        csihash['FAR'] = (onlyra2*area).sum() / ((matchra*area).sum() + (onlyra2*area).sum())
+        if verbose == 1:
+            print('used area')
+            print((matchra*area).sum().values, (onlyra1*area).sum().values, (onlyra2*area).sum().values)
+            print('CSI POD FAR' , csihash['CSI'] , csihash['POD'] , csihash['FAR'])
     else: 
-       csihash['CSI'] = matchra.sum() / (matchra.sum() + onlyra1.sum() + onlyra2.sum())
-       # hit rate or probability of detection (p 310 Wilks)
-       csihash['POD'] = matchra.sum() / (matchra.sum() + onlyra1.sum())
-       # false alarm ratio (p 310 Wilks)
-       csihash['FAR'] = onlyra2.sum() / (matchra.sum() + onlyra2.sum())
-       csihash['PCORR'] = pcorr
-       if verbose ==1:
-          print('HERE' , matchra.size, matchra.shape , onlyra2.shape)
-          print(matchra.sum() , onlyra1.sum() , onlyra2.sum())
-          print('CSI POD FAR' , csihash['CSI'] , csihash['POD'] , csihash['FAR'])
+        #Critical Success Index (Threat Score) = (hits) / (hits + false alarms + misses)
+        csihash['CSI'] = (matchra.sum() / (matchra.sum() + onlyra1.sum() + onlyra2.sum())).values
+        #hit rate or probability of detection (p 310 Wilks)
+        #POD = (hits) / (hits + misses)
+        csihash['POD'] = (matchra.sum() / (matchra.sum() + onlyra1.sum())).values
+        #false alarm ratio (p 310 Wilks)
+        #FAR = (false alarms) / (hits + false alarms)
+        csihash['FAR'] = (onlyra2.sum() / (matchra.sum() + onlyra2.sum())).values
+        csihash['PCORR'] = pcorr.values
+        if verbose == 1:
+            print('HERE' , matchra.size, matchra.shape , onlyra2.shape)
+            print(matchra.sum().values, onlyra1.sum().values, onlyra2.sum().values)
+            print('CSI POD FAR' , csihash['CSI'] , csihash['POD'] , csihash['FAR'])
  
     return csihash
