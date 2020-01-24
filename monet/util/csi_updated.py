@@ -16,7 +16,7 @@ data must be gridded the same.
 Functions
 ---------
 match_arrays
-get_area_ra
+get_area
 calc_fss  (fraction skill score)
 find_threshold
 mask_threshold
@@ -145,21 +145,32 @@ def match_arrays(ra1, lat1, lon1, ra2, lat2, lon2, missing_value = 0, verbose = 
        print('Shapes of output arrays ra1, ra2, lat, lon' , ra1.shape, ra2.shape, latlongrid[0].shape, latlongrid[1].shape)
     return latlongrid , ra1 , ra2
 
-def get_area_ra(lat, lon, radius=6378.137):
-    """Input is a 2d latitude numpy array and a 2d longitude numpy array. 
-       Output is array of same size with corresponding area (km2) of each grid cell.
-       Converts degrees to meters using a radius of 6378.137 km. Can  use the alt keyword to change this radius.
+def get_area(lat, lon, radius=6378.137):
+    import xarray as xr
+    import numpy as np
+    """Input is a 2d latitude xarray and a 2d longitude xarray. 
+       Output is xarray of same size with corresponding area (km2) of each grid cell.
+       Converts degrees to meters using a radius of 6378.137 km. 
        Assumes grid is spaced equally in degrees lat and degrees lon"""
 
-    d2km = radius * pi / 180.0     #convert degree latitude to meters. Assumes Earth radius of 6378137 meters.
-    d2r =  pi/180.0             #convert degrees to radians
+    d2km = radius * pi / 180.0     #convert degree latitude to kilometers.
+    d2r =  pi/180.0                      #convert degrees to radians
 
-    lat_space =  lat[1][0] - lat[0][0]
-    lon_space =  lon[0][1] - lon[0][0]
+    lat_space =  abs(lat[0,0] - lat[1,0])
+    lon_space =  abs(lon[0,0] - lon[0,1])
+    latrad = lat * d2r
+    area = xr.zeros_like(lat)
+    shape = np.shape(lat)
     if lat_space == 0 or lon_space==0:
        print('WARNING: lat or lon spacing is zero')
-    area = lat_space*d2km * lon_space * d2km * cos(d2r * lat)
-    #print 'Area shape', area.shape , lat.shape , np.amin(area) , np.amax(area) 
+    i = 0
+    while i < shape[0]:
+        j = 0
+        while j < shape[1]:
+            area[i,j] = lat_space * d2km * lon_space * d2km * cos(latrad[i,j])
+            j += 1
+        i += 1
+    print(np.shape(area), np.max(area), np.min(area))
     return area
 
 
@@ -180,10 +191,11 @@ def calc_fss(ra1, ra2, nodata_value='', threshold=0, verbose=0, sn=[0,5]):
        print('RANGE' , list(range(sn[0],sn[1])))
    bigN = ra1.size
    # create binary fields
-   mra1 = mask_threshold(ra1, threshold = 0)
+   mra1 = mask_threshold(ra1, threshold = 0.)
    mra2 = mask_threshold(ra2, threshold = threshold)
-   trim1, trim2, trimboth1, trimboth2 = trim_arrays(mra1, mra2, sn=[sn[0],sn[1]])
-   bigA = trimboth1.size
+   #trim1, trim2, trimboth1, trimboth2 = trim_array(mra1, mra2, sn=[sn[0],sn[1]])
+   #trimboth1, trimboth2 = trim_both(mra1, mra2)
+   #bigA = trimboth1.size
    for sz in range(sn[0],sn[1]):
        # e.g. for sz=3, ijrange=[-3,-2,-1,0,1,2,3]
        ijrange = list(range(-1*sz, sz+1))
@@ -200,20 +212,24 @@ def calc_fss(ra1, ra2, nodata_value='', threshold=0, verbose=0, sn=[0,5]):
        if (verbose == 1):
            print(incrlist)
            print('square size ' , sz*2+1 , square_size)
-           print('Orig array: '+ra1.shape)
-           print('Trim array1: '+trimboth1.shape)
-           print('Trim array2: '+trimboth2.shape)
+           print('Orig array: '+str(ra1.shape))
+           #print('Trim array1: '+str(trimboth1.shape))
+           #print('Trim array2: '+str(trimboth2.shape))
 
        # total number of above threshold points.
        print('SUMS orig: ' , mra1.sum() , mra2.sum())       
-       icol = trimboth1.shape[1]
-       irow = trimboth1.shape[0]
+       #icol = trimboth1.shape[1]
+       icol = mra1.shape[1]
+       #irow = trimboth1.shape[0]
+       irow = mra1.shape[0]
        maxrow = irow
        maxcol = icol
-       print('SUMS trimmed: ' , trimboth1.sum() , trimboth2.sum())
+       #print('SUMS trimmed: ' , trimboth1.sum() , trimboth2.sum())
        # create empty arrays of same shape as trimmed mask arrays
-       list_fractions_1 = np.empty_like(trimboth1).astype(float)
-       list_fractions_2 = np.empty_like(trimboth1).astype(float)
+       #list_fractions_1 = np.empty_like(trimboth1).astype(float)
+       list_fractions_1 = np.empty_like(mra1).astype(float)
+       #list_fractions_2 = np.empty_like(trimboth1).astype(float)
+       list_fractions_2 = np.empty_like(mra1).astype(float)
        start = time.time()
        for ic in range(0,icol):
            for ir in range(0,irow):
@@ -224,8 +240,10 @@ def calc_fss(ra1, ra2, nodata_value='', threshold=0, verbose=0, sn=[0,5]):
                    #Requires designated box for calculation to be fully within domain
                    #doesn't calculate at edges
                    if ir+incr[0] < maxrow and ic+incr[1] < maxcol and ir+incr[0] >= 0 and ic+incr[1] >= 0:
-                       fraction_1 += trimboth1[ir + incr[0]][ic+incr[1]]
-                       fraction_2 += trimboth2[ir + incr[0]][ic+incr[1]]
+                       #fraction_1 += trimboth1[ir + incr[0]][ic+incr[1]]
+                       fraction_1 += mra1[ir + incr[0]][ic+incr[1]]
+                       #fraction_2 += trimboth2[ir + incr[0]][ic+incr[1]]
+                       fraction_2 += mra2[ir + incr[0]][ic+incr[1]]
                #if fraction_1 > 0 or fraction_2 > 0:
                list_fractions_1[ir][ic] = (float(fraction_1) / float(square_size))
                list_fractions_2[ir][ic] = (float(fraction_2) / float(square_size))
@@ -241,10 +259,12 @@ def calc_fss(ra1, ra2, nodata_value='', threshold=0, verbose=0, sn=[0,5]):
           ax2.imshow(list_fractions_2)
           plt.show()
        #Calculate the Fractions Brier Score (FBS)
-       fbs = np.power(list_fractions_1 - list_fractions_2, 2).sum() / float(bigA)
+       #fbs = np.power(list_fractions_1 - list_fractions_2, 2).sum() / float(bigA)
+       fbs = np.power(list_fractions_1 - list_fractions_2, 2).sum() / float(bigN)
        print('FBS ' , fbs)
        #Calculate the worst possible FBS (assuming no overlap of nonzero fractions)
-       fbs_ref = (np.power(list_fractions_1,2).sum() + np.power(list_fractions_2,2).sum() ) / float(bigA)
+       #fbs_ref = (np.power(list_fractions_1,2).sum() + np.power(list_fractions_2,2).sum() ) / float(bigA)
+       fbs_ref = (np.power(list_fractions_1,2).sum() + np.power(list_fractions_2,2).sum() ) / float(bigN)
        print('FBS reference' , fbs_ref)
        #Calculate the Fractional Skill Score (FSS)
        fss = 1 - (fbs / fbs_ref)
@@ -280,12 +300,12 @@ def find_threshold(ra1, ra2, nodata_value=None):
     print(list2.size  , mask2.sum() , np.min(list2[vpi]))
     return list2[numpixels]
 
-def mask_threshold(ra1, threshold = 0):
-    """Input array and threshold. 
-    Returns array with 1's where value is above threshold, and 0 otherwise"""
-    vp1 = np.where(ra1 > threshold)
-    mask1 = np.zeros_like(ra1)
-    mask1[vp1] = 1
+def mask_threshold(ra1, threshold = 0.):
+    """input array. 
+        Returns array with 1's where data above threshold
+        and 0. if below or equal to threshold (nan = 0.)  """
+    mask = ra1.fillna(0.)
+    mask1 = mask.where(mask <= threshold, 1.)
     return mask1
 
 def expand_array(array, pad = 5):
@@ -360,19 +380,19 @@ def expand_both(array1, array2, pad = 3):
     slat2 = min(row2) - abs(dlat2 * (abs(ceil((min(yedge) - min(row2)) / dlat2)) + pads))
     elat2 = max(row2) + abs(dlat2 * (abs(ceil((max(yedge) - max(row2)) / dlat2)) + pads))
     #Determine orientation of original array  - maintain start and end for new array
-    if abs(col2[0] - elon1) < abs(col1[0] - slon1):
+    if abs(col1[-1] - slon1) < abs(col1[0] - slon1):
         tmp = slon1
         slon1 = elon1
         elon1 = tmp
-    if abs(col2[0] - elon2) < abs(col2[0] - slon2):
+    if abs(col2[-1] - slon2) < abs(col2[0] - slon2):
         tmp = slon2
         slon2 = elon2
         elon2 = tmp
-    if abs(row1[0] - elat1) < abs(row1[0] - slat1):
+    if abs(row1[-1] - slat1) < abs(row1[0] - slat1):
         tmp = slat1
         slat1 = elat1
         elat1 = tmp
-    if abs(row2[0] - elat2) < abs(row2[0] - slat2):
+    if abs(row2[-1] - slat2) < abs(row2[0] - slat2):
         tmp = slat2
         slat2 = elat2
         elat2 = tmp
@@ -433,10 +453,8 @@ def trim_array(array, pad = 5):
 
 def trim_both(mask1, mask2, pad = 5):
     """Trims two arrays to array size 
-    that encompasses data and minor
-    padding for both input arrays. 
-    Requires pixel radius (sn) value to determine 
-    padding to keep in array. 
+    that encompasses data and minor padding for both input arrays. 
+    Requires pixel radius (pad) value to determine padding to keep in array. 
     Inputs: array1, array2, radius of padding around array."""
     pad = pad * 2
     print(pad)
@@ -471,14 +489,9 @@ def calc_csi(ra1, ra2, area=None, nodata_value='', threshold=0, verbose=0):
     #Creating a csihash disctionary
     csihash = {}
     #Converting ra1 and ra2 to arrays of 0's and 1's (1 with values, 0 no values)
-    mask1 = mask_threshold(ra1, threshold = 0)
-    if (threshold != 0):
-       vp2 = np.where(ra2 >= threshold)
-       mask2 = ra2[:] * 0
-       mask2[vp2] = 1
-    else:
-       mask2 = mask_threshold(ra2, threshold = 0)
-
+    mask1 = mask_threshold(ra1, threshold = 0.)
+    mask2 = mask_threshold(ra2, threshold = threshold)
+   
     #Calculating hits (matchra), misses (onlyra1), false alarms (onlyra2) for CSI calculation
     matchra = mask2 * mask1  #returns array with ones where the two arrays both have valid values.
     onlyra1 = mask1 - matchra  #returns array with ones where ra1 has valid values and ra2 does not.
@@ -488,25 +501,24 @@ def calc_csi(ra1, ra2, area=None, nodata_value='', threshold=0, verbose=0):
     csihash['ra1'] = onlyra1
     csihash['ra2'] = onlyra2
 
-    allra = matchra + onlyra1 + onlyra2 ##ra with 1's in union. 0's where both are 0. (THIS ISNT TRUE)
-    #allra would have 3 at union, 1 at onlyra1, 1 at onlyra2, and 0 where both are 0, right???
+    allra = matchra + onlyra1 + onlyra2 
+
     vpi = np.where(allra == 1) ## Why is this necessary?
     ##Find pattern correlation (from Zidikheri and Potts) doesn't make sense to me.
     totalpts = matchra.sum() + onlyra1.sum() + onlyra2.sum()
     totalpts = mask2.shape[0] * mask2.shape[1] 
     ra1ave = (onlyra1.sum() + matchra.sum() ) / float(totalpts)
     ra2ave = (onlyra2.sum() + matchra.sum() ) / float(totalpts)
-    #ra1corr = (mask1 - ra1ave) * allra
-    #ra2corr = (mask2 - ra2ave) * allra
+    
     ra1corr = (mask1 - ra1ave) 
     ra2corr = (mask2 - ra2ave)
     norm =((ra1corr *ra1corr).sum())**0.5 * ((ra2corr*ra2corr).sum())**0.5 
     pcorr = (ra1corr * ra2corr).sum()  / norm
-    print('PCORR' , pcorr) 
-    print('ra1ave (obs)' ,  ra1ave) 
-    print('ra2ave (calc)' , ra2ave, end=' ') 
-    print('NORM' , norm , 'ra1corr*ra2corr' ,  (ra1corr *ra2corr).sum())
-    print(mask1.sum(), mask2.sum(), np.max(ra1corr), np.min(ra1corr))
+    print('PCORR' , pcorr.values) 
+    print('ra1ave (obs)' ,  ra1ave.values) 
+    print('ra2ave (calc)' , ra2ave.values, end=' ') 
+    print('NORM' , norm.values, 'ra1corr*ra2corr' ,  (ra1corr *ra2corr).sum().values)
+    print(mask1.sum().values, mask2.sum().values, np.max(ra1corr), np.min(ra1corr))
 
     ra1ave = 0
     ra2ave = 0
@@ -514,13 +526,8 @@ def calc_csi(ra1, ra2, area=None, nodata_value='', threshold=0, verbose=0):
     ra2corr = (mask2 - ra2ave)
     norm =((ra1corr *ra1corr).sum())**0.5 * ((ra2corr*ra2corr).sum())**0.5 
     pcorr = (ra1corr * ra2corr).sum()  / norm
-    print('PCORR (uncentered)' , pcorr)
-    #plt.imshow(mask1)
-    #plt.show()
-    #plt.imshow(mask2)
-    #plt.show()
-
-    #pcorr=-999 
+    print('PCORR (uncentered)' , pcorr.values)
+    
     ##Find where data arrays have no information.
     if nodata_value != '':
        vpND = np.where(logical_or(ra1 == nodata_value , ra2==nodata_value))
@@ -539,8 +546,8 @@ def calc_csi(ra1, ra2, area=None, nodata_value='', threshold=0, verbose=0):
        csihash['FAR'] = (onlyra2*area).sum() / ((matchra*area).sum() + (onlyra2*area).sum())
        if verbose ==1:
          print('used area')
-         print((matchra*area).sum() , (onlyra1*area).sum() , (onlyra2*area).sum())
-         print('CSI POD FAR' , csihash['CSI'] , csihash['POD'] , csihash['FAR'])
+         print((matchra*area).sum().values, (onlyra1*area).sum().values, (onlyra2*area).sum().values)
+         print('CSI POD FAR' , csihash['CSI'].values, csihash['POD'].values, csihash['FAR'].values)
     else: 
        csihash['CSI'] = matchra.sum() / (matchra.sum() + onlyra1.sum() + onlyra2.sum())
        # hit rate or probability of detection (p 310 Wilks)
@@ -549,8 +556,8 @@ def calc_csi(ra1, ra2, area=None, nodata_value='', threshold=0, verbose=0):
        csihash['FAR'] = onlyra2.sum() / (matchra.sum() + onlyra2.sum())
        csihash['PCORR'] = pcorr
        if verbose ==1:
-          print('HERE' , matchra.size, matchra.shape , onlyra2.shape)
-          print(matchra.sum() , onlyra1.sum() , onlyra2.sum())
-          print('CSI POD FAR' , csihash['CSI'] , csihash['POD'] , csihash['FAR'])
+          #print('HERE' , matchra.size.values, matchra.shape.values, onlyra2.shape.values)
+          print(matchra.sum().values, onlyra1.sum().values, onlyra2.sum().values)
+    print('CSI POD FAR' , csihash['CSI'].values, csihash['POD'].values, csihash['FAR'].values)
  
     return csihash
