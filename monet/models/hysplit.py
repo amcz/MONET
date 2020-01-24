@@ -147,9 +147,7 @@ class ModelBin(object):
         self.levels = None
 
         if readwrite == "r":
-            self.dataflag = self.readfile(
-                filename, drange, verbose=verbose, century=century
-            )
+            self.dataflag = self.readfile(filename, drange, verbose=verbose, century=century)
 
     @staticmethod
     def define_struct():
