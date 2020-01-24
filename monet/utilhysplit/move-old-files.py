@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 # start editable vars #
 hours_old = 48	# how old the files have to be before they are moved
 original_folder = "/pub/jpsss_upload/"	# folder to move files from
-new_folder = "/hysplit-users/allisonr/AlertArchive/"	# folder to move files to
+new_folder = "/hysplit-users/allisonr/AlertArchive/VOLCAT/"	# folder to move files to
 logfile = "/hysplit-users/allisonr/VOLCANO/MoveLog.log"	# log file to record what has happened
 # end editable vars #
 
