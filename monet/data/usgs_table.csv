@@ -426,7 +426,7 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 0603-16=,06,03,-16-,"Karaha, Kawah",Java,Fumarolic, 7.12,S,,108.08,E,1155,Fumarole field,U,S0
 0603-17=,06,03,-17-,Cereme,Java,Historical, 6.892,S,,108.40,E,3078,Stratovolcano,D2,S1
 0603-18=,06,03,-18-,Slamet,Java,Historical, 7.242,S,,109.208,E,3428,Stratovolcano,D2,M1
-0603-20=,06,03,-20-,Dieng Volc Complex,Java,Historical, 7.20,S,*,109.92,E,2565,Complex volcano,D2,S1
+0603-20=,06,03,-20-,Dieng Volcanic Complex,Java,Historical, 7.20,S,*,109.92,E,2565,Complex volcano,D2,S1
 0603-21=,06,03,-21-,Sundoro,Java,Historical, 7.30,S,,109.992,E,3136,Stratovolcano,D2,S1
 0603-22=,06,03,-22-,Sumbing,Java,Historical, 7.384,S,,110.070,E,3371,Stratovolcano,D4,S0
 0603-231,06,03,-231,Telomoyo,Java,Holocene, 7.37,S,,110.40,E,1894,Stratovolcano,U,S0
@@ -593,13 +593,13 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 0802-04=,08,02,-04-,Nakanoshima,Ryukyu Is,Historical,29.856,N,,129.859,E,979,Stratovolcanoes,D2,S0
 0802-05=,08,02,-05-,Kuchinoerabujima,Ryukyu Is,Historical,30.440,N,,130.219,E,657,Stratovolcanoes,D2,S2
 0802-06=,08,02,-06-,Kikai,Ryukyu Is,Historical,30.789,N,,130.308,E,704,Caldera,D1,S1
-0802-07=,08,02,-07-,Ibusuki Volc Field,Kyushu-Japan,Historical,31.22,N,*,130.57,E,922,Calderas,D6,S0
-0802-081,08,02,-081,Sumiyoshi-ike,Kyushu-Japan,Radiocarbon,31.768,N,,130.594,E,15,Maars,D7,M0
-0802-08=,08,02,-08-,Sakura-jima,Kyushu-Japan,Historical,31.585,N,,130.657,E,1117,Stratovolcano,D1,S1
+0802-07=,08,02,-07-,Ibusuki Volcanic Field,Kyushu-Japan,Historical,31.22,N,*,130.57,E,922,Calderas,D6,S0
+0802-081,08,02,-081,Yonemaru-Sumiyoshiike,Kyushu-Japan,Radiocarbon,31.768,N,,130.594,E,15,Maars,D7,M0
+0802-08=,08,02,-08-,Aira (Sakurajima),Kyushu-Japan,Historical,31.593,N,,130.657,E,1117,Stratovolcano,D1,S1
 0802-091,08,02,-091,Fukue-jima,Kyushu-Japan,Tephrochronology,32.653,N,,128.851,E,317,Shield volcanoes,D7,M0
 0802-09=,08,02,-09-,Kirishimayama,Kyushu-Japan,Historical,31.931,N,,130.864,E,1700,Shield volcano,D1,S1
 0802-10=,08,02,-10-,Unzen,Kyushu-Japan,Historical,32.757,N,,130.294,E,1500,Complex volcano,D2,S1
-0802-11=,08,02,-11-,Aso,Kyushu-Japan,Historical,32.881,N,,131.106,E,1592,Caldera,D1,M1
+0802-11=,08,02,-11-,Asosan,Kyushu-Japan,Historical,32.881,N,,131.106,E,1592,Caldera,D1,M1
 0802-12=,08,02,-12-,Kuju,Kyushu-Japan,Historical,33.083,N,,131.251,E,1791,Stratovolcanoes,D2,M1
 0802-13=,08,02,-13-,Tsurumi,Kyushu-Japan,Historical,33.28,N,,131.432,E,1584,Lava domes,D6,S0
 0803-001,08,03,-001,Abu,Honshu-Japan,Thermoluminescence,34.50,N,,131.60,E,641,Shield volcanoes,D7,M0
@@ -634,7 +634,7 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 0803-18=,08,03,-18-,Azuma,Honshu-Japan,Historical,37.732,N,,140.248,E,2035,Stratovolcanoes,D2,S1
 0803-191,08,03,-191,Hijiori,Honshu-Japan,Holocene,38.606,N,,140.178,E,516,Caldera,U,S0
 0803-19=,08,03,-19-,Zao,Honshu-Japan,Historical,38.141,N,,140.443,E,1841,Complex volcano,D2,S1
-0803-20=,08,03,-20-,Narugo,Honshu-Japan,Historical,38.733,N,,140.732,E,470,Caldera,D6,S0
+0803-20=,08,03,-20-,Naruko,Honshu-Japan,Historical,38.733,N,,140.732,E,470,Caldera,D6,S0
 0803-21=,08,03,-21-,Kurikoma,Honshu-Japan,Historical,38.958,N,,140.792,E,1628,Stratovolcano,D2,S1
 0803-22=,08,03,-22-,Chokai,Honshu-Japan,Historical,39.096,N,,140.052,E,2233,Stratovolcanoes,D2,S1
 0803-23=,08,03,-23-,Akita-Komaga-take,Honshu-Japan,Historical,39.758,N,,140.803,E,1637,Stratovolcanoes,D2,S1
@@ -716,20 +716,20 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 0805-082,08,05,-082,Rausu,Hokkaido-Japan,Radiocarbon,44.073,N,,145.126,E,1660,Stratovolcano,D3,S0
 0805-08=,08,05,-08-,Kutcharo,Hokkaido-Japan,Tephrochronology,43.608,N,,144.443,E,999,Caldera,D6,S0
 0805-09=,08,05,-09-,Shiretoko-Iwo-zan,Hokkaido-Japan,Historical,44.131,N,,145.165,E,1563,Stratovolcano,D2,S0
-0900-01=,09,00,-01-,Golovnin,Kuril Is,Historical,43.841,N,,145.509,E,543,Caldera,D3,S0
+0900-01=,09,00,-01-,Tomariyama (Golovnin),Kuril Is,Historical,43.841,N,,145.509,E,543,Caldera,D3,S0
 0900-021,09,00,-021,Smirnov,Kuril Is,Holocene,44.420,N,,146.135,E,1189,Stratovolcano,U,S0
 0900-02=,09,00,-02-,Raususan (Mendeleev),Kuril Is,Historical,43.976,N,,145.736,E,888,Stratovolcano,D3,S0
 0900-03=,09,00,-03-,Tiatia,Kuril Is,Historical,44.351,N,,146.256,E,1819,Stratovolcano,D2,M0
-0900-041,09,00,-041,Lvinaya Past,Kuril Is,Radiocarbon,44.608,N,,146.994,E,528,Stratovolcano,D7,S0
+0900-041,09,00,-041,Moekeshiwan (Lvinaya Past),Kuril Is,Radiocarbon,44.608,N,,146.994,E,528,Stratovolcano,D7,S0
 0900-04=,09,00,-04-,Berutarubesan (Berutarube),Kuril Is,Holocene,44.459,N,,146.936,E,1221,Stratovolcano,U,S0
-0900-05=,09,00,-05-,Atsonupuri,Kuril Is,Historical,44.805,N,,147.135,E,1206,Stratovolcano,D2,S0
-0900-06-,09,00,-06-,Bogatyr Ridge,Kuril Is,Holocene,44.833,N,,147.342,E,1634,Stratovolcano,U,S0
+0900-05=,09,00,-05-,Etorofu-Atsonupuri (Atosanupuri),Kuril Is,Historical,44.805,N,,147.135,E,1206,Stratovolcano,D2,S0
+0900-06-,09,00,-06-,Nishihitokappuyama (Bogatyr Ridge),Kuril Is,Holocene,44.833,N,,147.342,E,1634,Stratovolcano,U,S0
 0900-061,09,00,-061,Unnamed,Kuril Is,Uncertain,45.03,N,,147.208,E,-930,Submarine volcano,?,U0
 0900-07=,09,00,-07-,Grozny Group,Kuril Is,Historical,45.026,N,,147.922,E,1211,Complex volcanoes,D2,S1
-0900-08=,09,00,-08-,Baransky,Kuril Is,Historical,45.097,N,,148.024,E,1132,Stratovolcano,D2,S0
-0900-091,09,00,-091,Golets-Tornyi Group,Kuril Is,Holocene?,45.25,N,,148.35,E,442,Pyroclastic cones,?,S0
-0900-09=,09,00,-09-,Chirip,Kuril Is,Historical,45.338,N,,147.925,E,1587,Stratovolcanoes,D3,M0
-0900-10=,09,00,-10-,Medvezhia,Kuril Is,Historical,45.387,N,,148.843,E,1125,Somma volcano,D2,S0
+0900-08=,09,00,-08-,Sashiusudake [Baransky],Kuril Is,Historical,45.097,N,,148.024,E,1132,Stratovolcano,D2,S0
+0900-091,09,00,-091,Rucharuyama [Golets-Tornyi Group],Kuril Is,Holocene?,45.25,N,,148.35,E,442,Pyroclastic cones,?,S0
+0900-09=,09,00,-09-,Chirippusan [Chirip],Kuril Is,Historical,45.338,N,,147.925,E,1587,Stratovolcanoes,D3,M0
+0900-10=,09,00,-10-,Moyorodake [Medvezhia],Kuril Is,Historical,45.387,N,,148.843,E,1125,Somma volcano,D2,S0
 0900-11-,09,00,-11-,Rakkibetsudake [Demon],Kuril Is,Holocene,45.50,N,,148.85,E,1205,Stratovolcano,U,S0
 0900-111,09,00,-111,Ivao Group,Kuril Is,Holocene,45.77,N,,149.68,E,1426,Cinder cones,U,S0
 0900-112,09,00,-112,Rudakov,Kuril Is,Holocene?,45.88,N,,149.83,E,542,Stratovolcano,?,S0
@@ -1050,7 +1050,7 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 1203-08-,12,03,-08-,Lassen Volc Center,US-California,Historical,40.492,N,,121.508,W,3187,Stratovolcano,D2,S2
 1203-09-,12,03,-09-,Eagle Lake Field,US-California,Holocene?,40.63,N,*,120.83,W,1652,Fissure vents,?,M0
 1203-10-,12,03,-10-,Clear Lake,US-California,Holocene,38.97,N,*,122.77,W,1439,Volcanic field,U,S0
-1203-11-,12,03,-11-,Mono Lake Volc Field,US-California,Tephrochronology,38.00,N,*,119.03,W,2121,Cinder cones,D4,S0
+1203-11-,12,03,-11-,Mono Lake Volcanic Field,US-California,Tephrochronology,38.00,N,*,119.03,W,2121,Cinder cones,D4,S0
 1203-12-,12,03,-12-,Mono Craters,US-California,Radiocarbon,37.88,N,,119.00,W,2796,Lava domes,D6,S0
 1203-13-,12,03,-13-,Inyo Craters,US-California,Radiocarbon,37.692,N,,119.02,W,2629,Lava domes,D6,S0
 1203-15-,12,03,-15-,Mammoth Mountain,US-California,Radiocarbon,37.631,N,,119.032,W,3369,Lava domes,D6,S0
@@ -1109,7 +1109,7 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 1305-03-,13,05,-03-,Unnamed,Pacific-S,Uncertain,55.97,S,,143.17,W,,Submarine volcano,?,U0
 1401-00-,14,01,-00-,"Prieto, Cerro",México,Holocene?,32.418,N,,115.305,W,223,Lava dome,?,M0
 1401-001,14,01,-001,Pinacate,México,Holocene,31.772,N,*,113.498,W,1200,Cinder cones,U,M0
-1401-002,14,01,-002,San Quintín Volc Field,México,Holocene?,30.468,N,*,115.996,W,260,Cinder cones,?,M0
+1401-002,14,01,-002,San Quintin Volcanic Field,México,Holocene?,30.468,N,*,115.996,W,260,Cinder cones,?,M0
 1401-003,14,01,-003,"San Luis, Isla",México,Holocene,29.97,N,,114.40,W,180,Tuff cone,U,M0
 1401-004,14,01,-004,Jaraguay Volc Field,México,Holocene,29.33,N,*,114.50,W,960,Cinder cones,U,M0
 1401-005,14,01,-005,Coronado,México,Fumarolic,29.08,N,,113.513,W,440,Stratovolcano,U,S0
@@ -1326,7 +1326,7 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 1505-112,15,05,-112,"Escorial, Cerro",Chile-N,Holocene?,25.08,S,, 68.37,W,5447,Stratovolcano,?,S0
 1505-11=,15,05,-11-,Llullaillaco,Chile-N,Historical,24.72,S,, 68.53,W,6739,Stratovolcano,D3,S0
 1505-121,15,05,-121,Cordón del Azufre,Chile-N,Holocene,25.33,S,, 68.52,W,5463,Complex volcano,U,S0
-1505-122,15,05,-122,"Bayo, Cerro",Chile-N,Holocene,25.42,S,, 68.58,W,5401,Complex volcano,U,S0
+1505-122,15,05,-122,"Bayo Gorbea, Cerro",Chile-N,Holocene,25.42,S,, 68.58,W,5401,Complex volcano,U,S0
 1505-123,15,05,-123,"Nevada, Sierra",Chile-N,Holocene,26.48,S,*, 68.58,W,6127,Complex volcano,U,S0
 1505-124,15,05,-124,Falso Azufre,Chile-N,Holocene?,26.80,S,, 68.37,W,5890,Complex volcano,?,S0
 1505-125,15,05,-125,"Incahuasi, Nevado de",Chile-N,Holocene?,27.042,S,, 68.28,W,6621,Stratovolcanoes,?,S0
@@ -1368,7 +1368,7 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 1507-072,15,07,-072,Tromen,Argentina,Holocene,37.142,S,, 70.03,W,3978,Stratovolcanoes,U,S0
 1507-073,15,07,-073,Puesto Cortaderas,Argentina,Holocene,37.57,S,, 69.62,W,970,Pyroclastic cone,U,M0
 1507-07=,15,07,-07-,"Chillán, Nevados de",Chile-C,Historical,36.863,S,, 71.377,W,3212,Stratovolcano,D1,S1
-1507-081,15,07,-081,Trocon,Argentina,Holocene?,37.73,S,, 70.90,W,2500,Lava domes,?,S0
+1507-081,15,07,-081,Trolon,Argentina,Holocene?,37.73,S,, 70.90,W,2500,Lava domes,?,S0
 1507-08=,15,07,-08-,Antuco,Chile-C,Historical,37.406,S,, 71.349,W,2979,Stratovolcano,D3,S1
 1507-091,15,07,-091,Callaqui,Chile-C,Historical,37.92,S,, 71.45,W,3164,Stratovolcano,D2,S1
 1507-092,15,07,-092,"Mariñaqui, Laguna",Chile-C,Holocene,38.27,S,, 71.10,W,2143,Cinder cones,U,M0
@@ -1478,7 +1478,7 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 1802-04=,18,02,-04-,Graciosa,Azores,Holocene,39.02,N,, 27.97,W,402,Stratovolcano,U,M0
 1802-05=,18,02,-05-,Terceira,Azores,Historical,38.73,N,, 27.32,W,1023,Stratovolcanoes,D1,M0
 1802-07=,18,02,-07-,Don Joao de Castro Bank,Azores,Historical,38.23,N,, 26.63,W,-13,Submarine volcano,D4,M0
-1802-081,18,02,-081,Picos Volc System,Azores,Historical,37.78,N,*, 25.67,W,350,Pyroclastic cones,D5,M0
+1802-081,18,02,-081,Picos Volcanic System,Azores,Historical,37.78,N,*, 25.67,W,350,Pyroclastic cones,D5,M0
 1802-08=,18,02,-08-,Sete Cidades,Azores,Historical,37.87,N,, 25.78,W,856,Stratovolcano,D3,S0
 1802-09=,18,02,-09-,Agua de Pau,Azores,Historical,37.77,N,, 25.47,W,947,Stratovolcano,D5,S0
 1802-10=,18,02,-10-,Furnas,Azores,Historical,37.77,N,, 25.32,W,805,Stratovolcano,D5,S0
