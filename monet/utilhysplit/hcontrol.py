@@ -9,8 +9,7 @@ PYTHON 3
 ABSTRACT: classes and functions for creating HYSPLIT control and setup files.
 
    CLASSES
-   HycsControl: class for reading / writing a HYSPLIT dispersion run  control
-                file
+   HycsControl: class for reading / writing a HYSPLIT dispersion run control file
    Helper classes for HycsControl class
            ControlLoc: release location for  CONTROL file.
            Species: class representing pollutant properties as defined in
@@ -22,7 +21,6 @@ ABSTRACT: classes and functions for creating HYSPLIT control and setup files.
 FUNCTIONS
    writelanduse - writes ASCDATA.CFG file.
 """
-
 
 def writelanduse(landusedir, working_directory="./"):
     """writes an ASCDATA.CFG file in the outdir. The landusedir must
@@ -127,8 +125,7 @@ class ConcGrid:
         self.outdir = outdir
         self.outfile = outfile
         self.nlev = nlev
-        # string (could be changed to datetime)
-        self.sample_start = sample_start
+        self.sample_start = sample_start # string (could be changed to datetime)
         self.sample_stop = sample_stop  # string (could be changed to datetime)
         self.sampletype = sampletype
         self.interval = interval
@@ -497,7 +494,11 @@ class Species:
 
     def strpollutant(self, annotate=False):
         """Prints out three lines which define a species/pollutant in HYSPLIT
-        control file"""
+        control file.
+        1. Species identifier
+        2. Emission rate (per hour)
+        3. Hours of emission
+        4. Release start time"""
         note = ""
         spc = " " * 20
         if annotate:
@@ -551,7 +552,7 @@ class Species:
             note = spc + "#Wet deposition parameters"
         # if self.wetdep == 1:
         if self.wetdepstr == "":
-            #    returnval += "0.0 4.0E+04 5.0E-06" + note + "\n"
+            #returnval += "0.0 4.0E+04 5.0E-06" + note + "\n"
             returnval += "0.0 0.0 0.0" + note + "\n"
         else:
             returnval += self.wetdepstr + note + "\n"
@@ -797,11 +798,7 @@ class HycsControl(object):
        control file and all the information in it
     """
 
-    def __init__(
-            self,
-            fname="CONTROL",
-            working_directory="./",
-            rtype="dispersion"):
+    def __init__(self,fname="CONTROL",working_directory="./",rtype="dispersion"):
         self.fname = fname
         if working_directory[-1] != "/":
             working_directory += "/"
@@ -816,7 +813,6 @@ class HycsControl(object):
         self.num_sp = 0  # number of pollutants / species
         self.num_met = 0  # number of met files
         self.rtype = rtype  # dispersion or trajectory run.
-
         self.outfile = "cdump"
         self.outdir = "./"
         self.run_duration = 1
@@ -862,7 +858,6 @@ class HycsControl(object):
         self.locs.append(newloc)
         self.nlocs += 1 
         
-
     def add_location(
             self,
             line=False,
@@ -880,9 +875,7 @@ class HycsControl(object):
            area   :
         """
         self.nlocs += 1
-        self.locs.append(
-            ControlLoc(line=line, latlon=latlon, alt=alt, rate=rate, area=area)
-        )
+        self.locs.append(ControlLoc(line=line, latlon=latlon, alt=alt, rate=rate, area=area))
 
     def remove_locations(self, num=-99):
         """
@@ -1006,12 +999,14 @@ class HycsControl(object):
                 else:
                     fid.write(sp.strpollutant(annotate=False))
                 iii += 1
+
             fid.write(str(self.num_grids) + "\n")
+                
             for cg in self.concgrids:
                 if annotate:
                     cg.set_annotate()
                 fid.write(str(cg))
-
+            
             if annotate:
                 note = sp28 + "#Number of Pollutant Species"
             fid.write(str(self.num_sp) + note + "\n")
@@ -1022,7 +1017,7 @@ class HycsControl(object):
                 else:
                     fid.write(sp.strdep(annotate=False))
                 iii += 1
-
+            
         return False
 
     def summary(self):
@@ -1081,6 +1076,9 @@ class HycsControl(object):
             zz = zz + 2 * self.num_met
             # if it is a trajectory control file then just
             # two more lines
+            if self.rtype == "dispersion":
+                self.outdir = content[zz]
+                self.outfile = content[zz + 1]
             if self.rtype == "trajectory":
                 self.outdir = content[zz]
                 self.outfile = content[zz + 1]
