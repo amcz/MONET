@@ -1,10 +1,10 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 import datetime
 import numpy as np
+import sys
 from operator import itemgetter
 
-"""
-Classes to read and write input file for HYSPLIT.
+"""Classes to read and write input file for HYSPLIT.
 Emissions file see https://ready.arl.noaa.gov/hysplitusersguide/S417.htm
    class EmiTimes : EMITTIMES file which can be used as input to HYSPLIT.
                     to specify emissions.
@@ -12,13 +12,10 @@ Emissions file see https://ready.arl.noaa.gov/hysplitusersguide/S417.htm
    class EmitLine  : one line in an EMITTIMES file
 """
 
-
 class EmiTimes(object):
-    """
-    Class to represent and EMITTIMES file which can be used as input to HYSPLIT.
+    """Class to represent and EMITTIMES file which can be used as input to HYSPLIT.
     Helper classes are EmitCycle which represents one emissions Cycle in the
     file and EmitLine which represents one line in the file.
-
 
     General usage is to initialize the class
     efile = EmiTimes(filename)
@@ -54,10 +51,7 @@ class EmiTimes(object):
 
     other capabilities include
 
-    efile.filter_records:remove records which lie outside a defined
-                         rectangular area.
-
-    """
+    efile.filter_records: remove records which lie outside a defined rectangular area."""
 
     def __init__(self, filename="EMITIMES.txt", nanvalue=None, species=[1]):
         self.filename = filename
@@ -73,13 +67,10 @@ class EmiTimes(object):
         self.header = self.header_str()
 
     def header_str(self):
-        """
-        default header string for EMITTIMES file
-        RETURNS
+        """default header string for EMITTIMES file RETURNS
+        returnval : str"""
 
-        returnval : str
-        """
-        returnval = "YYYY MM DD HH    DURATION(hhhh) #RECORDS #spnum "
+        returnval = "YYYY MM DD HH   DURATION(hhhh) #RECORDS "
         for val in self.splist:
             returnval += str(self.sphash[val]) + " "
         returnval += "\n"
@@ -92,8 +83,7 @@ class EmiTimes(object):
 
     def set_species(self, sphash):
         for val in self.splist:
-            # if there is a species not
-            # in the hash then make a new name.
+            # if there is a species not in the hash then make a new name.
             if val not in sphash.keys():
                 # print('setting species name')
                 sphash[val] = "P" + str(val)
@@ -102,15 +92,13 @@ class EmiTimes(object):
         self.header = self.header_str()
 
     def get_species(self):
-        """
-        This determines number of species from the cycles.
-        """
+        """ This determines number of species from the cycles."""
+
         return list(np.arange(1, self.findmaxsp() + 1))
 
     def findmaxsp(self):
-        """
-        find cycle with the most species.
-        """
+        """ Find cycle with the most species."""
+
         maxsp = 1
         for ec in self.cycle_list:
             spnum = ec.splist[-1]
@@ -119,16 +107,12 @@ class EmiTimes(object):
         return maxsp
 
     def findmaxrec(self):
-        """
-        Find cycle with the most records and return number of records in that
-        cycle.
+        """ Find cycle with the most records and return number of records in that cycle.
         This is used when writing an EmitTimes file since HYSPLIT
         requires each cycle to have the same number of records.
         Cycles with less records will have dummy records added.
-        Returns
-        maxrec : int
-           maximum number of records.
-        """
+        Returns maxrec : int of maximum number of records."""
+
         maxrec = 0
         for ec in self.cycle_list:
             if ec.nrecs > maxrec:
@@ -136,10 +120,8 @@ class EmiTimes(object):
         return maxrec
 
     def write_new(self, filename):
-        """
-        write a new EmitTimes file to filename.
-        filename : str
-        """
+        """ Write a new EmitTimes file to filename.
+        filename : str"""
         # make sure all cycles have same number of species.
         self.splist = list(range(1, self.findmaxsp() + 1))
         # make sure that there is a name for each species.
@@ -162,9 +144,8 @@ class EmiTimes(object):
         # print('end file', filename)
 
     def header2sp(self):
-        """
-        check if information on species is stored in the first line.
-        """
+        """ Check if information on species is stored in the first line."""
+
         rval = False
         if "spnum" in self.header:
             rval = True
@@ -181,17 +162,15 @@ class EmiTimes(object):
         return rval
 
     def read_file(self, verbose=False, num_species=1):
-        """
-        Reads an EmitTimes file.
+        """ Reads an EmitTimes file.
         verbose: boolean
 
         num_species is used to determine how many species are represented.
         Default is 1.
-        if this information is in the header, that will be used instead.
+        If this information is in the header, that will be used instead.
 
-        Returns False if EmitTimes file is empty
+        Returns False if EmitTimes file is empty """
 
-        """
         with open(self.filename, "r") as fid:
             lines = fid.readlines()
             self.header = lines[0] + "/n" + lines[1]
@@ -221,13 +200,10 @@ class EmiTimes(object):
             return True
 
     def add_cycle(self, sdate, duration):
-        """
-        Adds information on a cycle to an EmiTimes object.
-        sdate: datetime object
-               start time of cycle.
-        duration : integer
-               duratio in hours of cycle.
-        """
+        """ Adds information on a cycle to an EmiTimes object.
+        sdate: datetime object start time of cycle.
+        duration : integer duration in hours of cycle."""
+
         self.ncycles += 1
         ec = EmitCycle(sdate, duration)
         self.cycle_list.append(ec)
@@ -238,33 +214,18 @@ class EmiTimes(object):
         self.sdatelist.append(sdate)
 
     def filter_records(self, llcrnr, urcrnr):
-        """ removes records which are outside the box
-            described by llcrnr = (lat, lon) lower left corner
-                         urcrnr = (lat, lon) upper right corner
-        """
+        """ Removes records which are outside the box described by 
+        llcrnr = (lat, lon) lower left corner
+        urcrnr = (lat, lon) upper right corner """
+
         for ec in self.cycle_list:
             ec.filter_records(llcrnr, urcrnr)
 
-    def add_record(
-            self,
-            date,
-            duration,
-            lat,
-            lon,
-            height,
-            rate,
-            area,
-            heat,
-            spnum=1,
-            nanvalue=0):
-        """
-        adds a record to a cycle based on the date of the record.
-        Returns:
-           rvalue : boolean
-           False if no cycle could be found to add the record to.
-        """
-        # This block determines which cycle the record goes into
-        # based on the date.
+    def add_record(self,date,duration,lat,lon,height,rate,area,heat,spnum=1,nanvalue=0):
+        """ Adds a record to a cycle based on the date of the record.
+        Returns: rvalue (boolean)
+        False if no cycle could be found to add the record to. """
+        # This block determines which cycle the record goes into based on the date.
         cycle_number = -1
         for ccc in self.chash:
             if date >= self.chash[ccc][0] and date < self.chash[ccc][1]:
@@ -272,55 +233,42 @@ class EmiTimes(object):
         if cycle_number == -1:
             rvalue = False
         else:
-            self.cycle_list[cycle_number].add_record(
-                date, duration, lat, lon, height, rate, area, heat, spnum, nanvalue)
+            self.cycle_list[cycle_number].add_record(date, duration, lat, lon, height, rate, area, heat, spnum, nanvalue)
             rvalue = True
         return rvalue
 
 
 class EmitCycle(object):
-    """Helper class for EmitTimes
+    """ Helper class for EmitTimes
     This represents a cycle in an EmitTimes file.
-    Each cycle begins with a line which has the start date, duration
-    and number of records. Then the records follow.
-    """
+    Each cycle begins with a line which has the start date, duration and number of records.
+    Then the records follow. """
 
     # def __init__(self, filename='EMITIMES.txt'):
 
     def __init__(self, sdate=None, duration=None, splist=[1]):
         self.sdate = sdate
         self.duration = duration  # duration of the cycle.
+        #List of EmitLine Objects
         self.recordra = []
         # number of records in a cycle.
         self.nrecs = 0
-        # number of locations in a cycle.
-        # this will be nrecs / len(splist)
+        # number of locations in a cycle. This will be nrecs / len(splist)
         self.nlocs = 0
         # all cycles in a file must have same number of records.
-        # so some cycles may need to have dummy records
-        # with zero emissions.
+        # so some cycles may need to have dummy records with zero emissions.
         self.dummy_recordra = []
         self.drecs = 0
         self.splist = splist  # list of ints starting with 1.
 
     def sort(self):
-        # sort records according to date and then spnum.
-        # then lat, lon and height.
+        # sort records according to date, then spnum, then lat, lon and height.
         # this sort order will allow line sources to be specified properly.
-        #
-        self.recordra.sort(
-            key=lambda x: (
-                x.date,
-                x.spnum,
-                x.lat,
-                x.lon,
-                x.height))
+        self.recordra.sort(key=lambda x: (x.date,x.spnum,x.lat,x.lon,x.height))
         return -1
 
     def fill_species(self):
-        """
-        make sure one record written for each species.
-        """
+        """ Make sure one record written for each species. """
         rstr = ""
         if self.splist[0] == 0:
             print("WARNING EmitCycle: species list should start with 1")
@@ -328,7 +276,7 @@ class EmitCycle(object):
         nlist = []
         slist = []
         for rc in self.recordra:
-            nlist.append((rc.date, rc.lat, rc.lon, rc.height))
+            nlist.append(rc.date, rc.lat, rc.lon, rc.height)
             slist.append(rc.spnum)
         # list of all date, lat, lon height locations
         nlist = sorted(set(nlist))
@@ -337,12 +285,10 @@ class EmitCycle(object):
         slist = list(set(slist))
         alist = []
         # list with one species for each date, lat, lon, height location.
-        alist = []
         for nnn in nlist:
             for sss in self.splist:
-                alist.append((nnn, sss))
-        # now need to make sure records match the alist. and fill in ones that
-        # don't.
+                alist.append(nnn, sss)
+        # now need to make sure records match the alist. and fill in ones that don't.
         jjj = 0
         new_records = []
         for rc in self.recordra:
@@ -355,17 +301,7 @@ class EmitCycle(object):
                 lon = alist[jjj][0][2]
                 ht = alist[jjj][0][3]
                 spnum = alist[jjj][1]
-                new_records.append(
-                    EmitLine(
-                        date,
-                        "0100",
-                        lat,
-                        lon,
-                        0,
-                        0,
-                        0,
-                        0,
-                        spnum))
+                new_records.append(EmitLine(date,"0100",lat,lon,0,0,0,0,spnum))
                 jjj += 1
             jjj += 1
 
@@ -375,17 +311,7 @@ class EmitCycle(object):
             lon = alist[iii][0][2]
             ht = alist[iii][0][3]
             spnum = alist[iii][1]
-            new_records.append(
-                EmitLine(
-                    date,
-                    "0100",
-                    lat,
-                    lon,
-                    0,
-                    0,
-                    0,
-                    0,
-                    spnum))
+            new_records.append(EmitLine(date,"0100",lat,lon,0,0,0,0,spnum))
 
         for rec in new_records:
             self.add_emitline(rec)
@@ -393,9 +319,7 @@ class EmitCycle(object):
         return 1
 
     def parse_header(self, header):
-        """
-        read header in the file.
-        """
+        """ Read header in the file. """
         temp = header.split()
         year = int(temp[0])
         month = int(temp[1])
@@ -410,9 +334,7 @@ class EmitCycle(object):
         return nrecs
 
     def write_new(self, filename):
-        """
-        write new emittimes file.
-        """
+        """ Write new emittimes file."""
         # if len(self.splist)>1: self.fill_species()
         maxrec = self.nrecs + self.drecs
         datestr = self.sdate.strftime("%Y %m %d %H ")
@@ -426,16 +348,11 @@ class EmitCycle(object):
                 fid.write(str(record))
 
     def parse_record(self, record, spnum=1):
-        """
-        Takes a string which is a line in an EMITTIMES file
-        specifying an emission and turn it into an EmitLine object.
+        """ Takes a string which is a line in an EMITTIMES file specifying an emission 
+        and turn it into an EmitLine object.
         record : string
-        spnum : int
-               indicates species number
-               (position in CONTROL file starting with 1)
-        RETURNS
-        EmitLine object.
-        """
+        spnum : int (indicates species number position in CONTROL file starting with 1)
+        RETURNS: EmitLine object. """
         temp = record.split()
         year = int(temp[0])
         month = int(temp[1])
@@ -461,10 +378,10 @@ class EmitCycle(object):
         return EmitLine(sdate, duration, lat, lon, ht, rate, area, heat, spnum)
 
     def add_dummy_record(self):
-        """uses last record in the recordra to get date and position"""
+        """ Uses last record in the recordra to get date and position"""
         rc = self.recordra[-1]
 
-        # need to make lat lon slightly different or HYSPLIT
+        # need to make lat lon slightly different for HYSPLIT
         # will think these are line sources and not calculate number
         # of particles to emit correctly in emstmp.f
         lat = rc.lat + np.random.rand(1)[0] * 10
@@ -480,47 +397,13 @@ class EmitCycle(object):
             self.splist.sort()
         self.nrecs += 1
 
-    def add_record(
-            self,
-            sdate,
-            duration,
-            lat,
-            lon,
-            ht,
-            rate,
-            area,
-            heat,
-            spnum=1,
-            nanvalue=0):
-        """Inputs
-        sdate
-        duration
-        lat
-        lon
-        height
-        rate
-        area
-        heat
-        """
+    def add_record(self,sdate,duration,lat,lon,ht,rate,area,heat,spnum=1,nanvalue=0):
+        """ Inputs: sdate, duration, lat, lon, height, rate, area, heat  """
         if spnum == 0:
             import sys
-
-            print(
-                "ERROR in add_record",
-                sdate,
-                duration,
-                lat,
-                lon,
-                ht,
-                rate,
-                area,
-                heat,
-                spnum,
-            )
+            print("ERROR in add_record",sdate,duration,lat,lon,ht,rate,area,heat,spnum)
             sys.exit()
-        eline = EmitLine(
-            sdate, duration, lat, lon, ht, rate, area, heat, spnum, nanvalue
-        )
+        eline = EmitLine(sdate, duration, lat, lon, ht, rate, area, heat, spnum, nanvalue)
         self.recordra.append(eline)
         if spnum not in self.splist:
             self.splist.append(spnum)
@@ -528,25 +411,20 @@ class EmitCycle(object):
         self.nrecs += 1
 
     def read_cycle_header(self, header, verbose=False):
-        """
-        Read line containing header information for the emisson cycle.
+        """ Read line containing header information for the emisson cycle.
         header : str
-        verbose : boolean
-        """
+        verbose : boolean """
         nrecs = self.parse_header(header)
         if verbose:
-            print("HEADER", header)
+            print("HEADER:", header)
         return nrecs
 
     def read_cycle(self, lines, num_species=1, verbose=False):
-        """
-        Take lines from an emittimes file and turn them into
-        instances of the EmitLine  class. Add them to the list of
-        EmitLine objects.
-        lines : list of str
+        """ Take lines from an emittimes file and turn them into
+        instances of the EmitLine class. Add them to the list of EmitLine objects.
+        lines: list of str
         verbose: boolean
-        TO DO: take into account number of species.
-        """
+        TO DO: take into account number of species. """
         check = True
         recordra = []
         jjj = 1
@@ -562,10 +440,9 @@ class EmitCycle(object):
         return check
 
     def filter_records(self, llcrnr, urcrnr):
-        """ removes records which are outside the box
-            described by llcrnr = (lat, lon) lower left corner
-                         urcrnr = (lat, lon) upper right corner
-        """
+        """ Removes records which are outside the box described by 
+        llcrnr = (lat, lon) lower left corner
+        urcrnr = (lat, lon) upper right corner """
         iii = 0
         rrr = []
         for record in self.recordra:
@@ -580,31 +457,15 @@ class EmitCycle(object):
 
 
 class EmitLine(object):
-    """
-    Helper class for EmiTimes and EmitCycle.
-    Represents one line in ane EMITTIMES file.
+    """ Helper class for EmiTimes and EmitCycle. 
+    Represents one line in an EMITTIMES file.
 
     methods:
     __init__
     checknan
-    __str__
+    __str__ """
 
-    """
-
-    def __init__(
-        self,
-        date,
-        duration,
-        lat,
-        lon,
-        height,
-        rate,
-        area=0,
-        heat=0,
-        spnum=1,
-        nanvalue=0,
-        verbose=False,
-    ):
+    def __init__(self,date,duration,lat,lon,height,rate,area=0,heat=0,spnum=1,nanvalue=0,verbose=False):
         self.date = date
         self.duration = duration
         self.lat = lat
@@ -617,17 +478,10 @@ class EmitLine(object):
         self.spnum = spnum
         nanpresent = self.checknan(nanvalue)
         if nanpresent and verbose:
-            print(
-                "WARNING: EmitFile NaNs present. \
-          Being changed to "
-                + str(nanvalue)
-                + self.message
-            )
+            print("WARNING: EmitFile NaNs present. Being changed to "+str(nanvalue)+self.message)
 
     def checknan(self, nanvalue):
-        """
-        check to see if a nan is in the area or rate field.
-        change the nan to self.nanvalue.
+        """ Check to see if a nan is in the area or rate field. Change the nan to self.nanvalue.
         """
         nanpresent = False
         if np.isnan(self.area):
@@ -645,19 +499,21 @@ class EmitLine(object):
         return nanpresent
 
     def __str__(self):
-        """
-        output in correct format for EMITTIMES file.
-        """
+        """ Output in correct format for EMITTIMES file. """
         returnstr = self.date.strftime("%Y %m %d %H %M ")
         returnstr += self.duration + " "
         returnstr += "{:1.4f}".format(self.lat) + " "
         returnstr += "{:1.4f}".format(self.lon) + " "
-        returnstr += str(self.height) + " "
-        returnstr += "{:1.2e}".format(self.rate) + " "
+        returnstr += "{:1.0f}".format(self.height) + " "
+        if self.rate <= 999999:
+            returnstr += "{:10.0f}".format(self.rate) + " "
+        elif self.rate > 999999:
+            returnstr += "{:10.3e}".format(self.rate) + " "
+
         returnstr += "{:1.2e}".format(self.area) + " "
         try:
             returnstr += "{:1.2e}".format(self.heat)
-            # returnstr += " \n"
+            returnstr += " \n"
         except BaseException:
             returnstr += str(self.heat)
             returnstr += '\n'
