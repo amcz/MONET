@@ -59,8 +59,8 @@ def findcycles_archive(dstart, dend, metdata, direction):
      metdirlist = []
      metfilelist=[]
      datelist = []
-     if (metdata=="GDAS0p5"):
-         met = "gdas0p5"
+     if (metdata=="GFS0p25"):
+         met = "gfs0p25"
          metdir1=DIR + met + '/'
          if (direction == 'Forward'):
              datelist.append(dstart)
