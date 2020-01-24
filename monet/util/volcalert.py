@@ -100,15 +100,15 @@ def get_vaac(root):
 def get_height(root):
     """Extracts the ash plume height - only valid for ash alerts!
     Values returned are in this order:
-    1. Maximum ash height (meters)
+    1. Maximum ash height (kilometers)
     2. Maximum ash height (feet)
-    3. Tropopause height (meters)
+    3. Tropopause height (kilometers)
     4. Tropopause height (feet)"""
-    hgt_m = root.alert.max_height.attrib.get('value')
+    hgt_km = root.alert.max_height.attrib.get('value')
     hgt_ft = root.alert.max_height_feet.attrib.get('value')
-    tropohgt_m = root.alert.tropo_height.attrib.get('value')
+    tropohgt_km = root.alert.tropo_height.attrib.get('value')
     tropohgt_ft = root.alert.tropo_height_feet.attrib.get('value')
-    return hgt_m, hgt_ft, tropohgt_m, tropohgt_ft
+    return hgt_km, hgt_ft, tropohgt_km, tropohgt_ft
 
 #Extract ash mass loading
 def get_mass(root):
