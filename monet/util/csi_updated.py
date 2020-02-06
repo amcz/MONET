@@ -145,133 +145,143 @@ def match_arrays(ra1, lat1, lon1, ra2, lat2, lon2, missing_value = 0, verbose = 
        print('Shapes of output arrays ra1, ra2, lat, lon' , ra1.shape, ra2.shape, latlongrid[0].shape, latlongrid[1].shape)
     return latlongrid , ra1 , ra2
 
-def get_area(lat, lon, radius=6378.137):
+def get_area_domain(dset, directory='./',write=0, radius=6378.137):
     import xarray as xr
     import numpy as np
-    """Input is a 2d latitude xarray and a 2d longitude xarray. 
+    from math import pi, cos
+    """Input is a VOLCAT dataset. Use after volcat.open_dataset(fname). 
+       Provide directory for where area netcdf should be located. Default is cwd.
+       Default to NOT write area array to netcdf file.
        Output is xarray of same size with corresponding area (km2) of each grid cell.
-       Converts degrees to meters using a radius of 6378.137 km. 
-       Assumes grid is spaced equally in degrees lat and degrees lon"""
+       Converts degrees to meters using a radius of 6378.137 km."""
 
-    d2km = radius * pi / 180.0     #convert degree latitude to kilometers.
-    d2r =  pi/180.0                      #convert degrees to radians
-
-    lat_space =  abs(lat[0,0] - lat[1,0])
-    lon_space =  abs(lon[0,0] - lon[0,1])
-    latrad = lat * d2r
-    area = xr.zeros_like(lat)
-    shape = np.shape(lat)
-    if lat_space == 0 or lon_space==0:
-       print('WARNING: lat or lon spacing is zero')
+    d2r =  pi/180.0              #convert degrees to radians
+    d2km = radius * d2r     #convert degree latitude to kilometers.
+    
+    ash_mass = dset.ash_mass     #Pulls out ash mass array
+    ash_mass = ash_mass[0,:,:]    #Removes time dimension
+    lat = ash_mass.latitude
+    lon = ash_mass.longitude
+    latrad = lat * d2r     #Creating latitude array in radians
+    coslat = np.cos(latrad) * d2km * d2km     #Grouping constant multiplication outside of loop
+    #Creates an array copy of ash_mass filled with the fill value
+    area = xr.full_like(ash_mass,ash_mass._FillValue)
+    shape = np.shape(area)
+    #Begins looping through each element of array
     i = 0
-    while i < shape[0]:
+    while i < (shape[0] - 1):
         j = 0
-        while j < shape[1]:
-            area[i,j] = lat_space * d2km * lon_space * d2km * cos(latrad[i,j])
+        while j < (shape[1] - 1):
+            area[i,j] = abs(lat[i,j] - lat[i+1,j]) * abs(abs(lon[i,j]) - abs(lon[i,j+1])) * coslat[i,j]
             j += 1
         i += 1
-    print(np.shape(area), np.max(area), np.min(area))
+    if write == 1:
+        #Reformatting array attributes before writing to netcdf
+        area.name = 'area'
+        area.attrs['long_name'] = 'area of each lat/lon grid box'
+        area.attrs['units'] = 'km^2'
+        area.to_netcdf(directory+'area_whole_domain.nc')   #Writes area array to netcdf 
     return area
 
+def get_area(dset, dset2):
+    import xarray as xr
+    import numpy as np
+    from monet.util import volcat
+    """MUST BE RUN AFTER GENERATING AREA FILE FOR FULL DOMAIN!
+       Input is a VOLCAT dataset. Use after volcat.open_dataset(fname). 
+       Input is also area array. Use xr.open_dataset(fname).
+       Output is xarray sized to ash mass data present in VOLCAT file.
+       Output is in km^2, will need conversion to m^2 if necessary."""
+    area = dset2.area    #Pulling out area array
+    ash_mass = dset.ash_mass     #Pulls out ash mass array
+    ash_mass = ash_mass[0,:,:]    #Removes time dimension
+    area2 = area.where(ash_mass != ash_mass._FillValue, drop = True)
+    return area2
 
-def calc_fss(ra1, ra2, nodata_value='', threshold=0, verbose=0, sn=[0,5]):
-   """Calculates the fraction skill score (fss) 
+def calc_fss(ra1, ra2, plot_fractions = False, threshold=0, sn=[3,10]):
+    from scipy.signal import convolve2d
+    """Calculates the fraction skill score (fss) 
        See Robers and Lean (2008) Monthly Weather Review
        and Schwartz et al (2010) Weather and Forecasting
        for more information.
        
        ra1 is observations/satellite
        ra2 is the forecast/model
+       Can plot fractions if desired (double check calculations)
        threshold = value for data threshold
        sn is the number of pixels (radius) to use in fractions calculation
-            default is to use 1, 3, 5, 7, 9 pixels size squares
-   """
-   fss_list = []
-   if (verbose == 1):
-       print('RANGE' , list(range(sn[0],sn[1])))
-   bigN = ra1.size
-   # create binary fields
-   mra1 = mask_threshold(ra1, threshold = 0.)
-   mra2 = mask_threshold(ra2, threshold = threshold)
-   #trim1, trim2, trimboth1, trimboth2 = trim_array(mra1, mra2, sn=[sn[0],sn[1]])
-   #trimboth1, trimboth2 = trim_both(mra1, mra2)
-   #bigA = trimboth1.size
-   for sz in range(sn[0],sn[1]):
-       # e.g. for sz=3, ijrange=[-3,-2,-1,0,1,2,3]
-       ijrange = list(range(-1*sz, sz+1))
-       print('ijrange: ', ijrange)
-       # li will be coordinates of all the points in the ra.
-       # e.g. [(-3,-3), (-3,-2), (-3,-1).....]
-       x = permutations(ijrange+ijrange,2)
-       li = []
-       for i in x:
-           li.append(i)
-       # remove duplicates (e.g. (2,3) will be in there twice)
-       incrlist=list(set(li))
-       square_size = len(incrlist)
-       if (verbose == 1):
-           print(incrlist)
-           print('square size ' , sz*2+1 , square_size)
-           print('Orig array: '+str(ra1.shape))
-           #print('Trim array1: '+str(trimboth1.shape))
-           #print('Trim array2: '+str(trimboth2.shape))
+            default is to use 1, 3, 5, 7 pixels size squares
+    """   
+    #Creating FSS dictionary
+    fss_dict = {}
+    bigN = ra1.size
+    # create binary fields
+    mask1 = mask_threshold(ra1, threshold = 0.)
+    mask2 = mask_threshold(ra2, threshold = threshold)
 
-       # total number of above threshold points.
-       print('SUMS orig: ' , mra1.sum() , mra2.sum())       
-       #icol = trimboth1.shape[1]
-       icol = mra1.shape[1]
-       #irow = trimboth1.shape[0]
-       irow = mra1.shape[0]
-       maxrow = irow
-       maxcol = icol
-       #print('SUMS trimmed: ' , trimboth1.sum() , trimboth2.sum())
-       # create empty arrays of same shape as trimmed mask arrays
-       #list_fractions_1 = np.empty_like(trimboth1).astype(float)
-       list_fractions_1 = np.empty_like(mra1).astype(float)
-       #list_fractions_2 = np.empty_like(trimboth1).astype(float)
-       list_fractions_2 = np.empty_like(mra1).astype(float)
-       start = time.time()
-       for ic in range(0,icol):
-           for ir in range(0,irow):
-               fraction_1 = 0
-               fraction_2 = 0
-               for incr in incrlist:
-                   #Finding pixels for fraction calculation
-                   #Requires designated box for calculation to be fully within domain
-                   #doesn't calculate at edges
-                   if ir+incr[0] < maxrow and ic+incr[1] < maxcol and ir+incr[0] >= 0 and ic+incr[1] >= 0:
-                       #fraction_1 += trimboth1[ir + incr[0]][ic+incr[1]]
-                       fraction_1 += mra1[ir + incr[0]][ic+incr[1]]
-                       #fraction_2 += trimboth2[ir + incr[0]][ic+incr[1]]
-                       fraction_2 += mra2[ir + incr[0]][ic+incr[1]]
-               #if fraction_1 > 0 or fraction_2 > 0:
-               list_fractions_1[ir][ic] = (float(fraction_1) / float(square_size))
-               list_fractions_2[ir][ic] = (float(fraction_2) / float(square_size))
-       end = time.time()
-       print('Calc time: ', end - start)
-       #Can plot fractions if desired (double check calculations)
-       plot_fractions = False
-       if (plot_fractions == True):
-          fig = plt.figure(1)
-          ax1 = fig.add_subplot(2,1,1) 
-          ax2 = fig.add_subplot(2,1,2) 
-          ax1.imshow(list_fractions_1)
-          ax2.imshow(list_fractions_2)
-          plt.show()
-       #Calculate the Fractions Brier Score (FBS)
-       #fbs = np.power(list_fractions_1 - list_fractions_2, 2).sum() / float(bigA)
-       fbs = np.power(list_fractions_1 - list_fractions_2, 2).sum() / float(bigN)
-       print('FBS ' , fbs)
-       #Calculate the worst possible FBS (assuming no overlap of nonzero fractions)
-       #fbs_ref = (np.power(list_fractions_1,2).sum() + np.power(list_fractions_2,2).sum() ) / float(bigA)
-       fbs_ref = (np.power(list_fractions_1,2).sum() + np.power(list_fractions_2,2).sum() ) / float(bigN)
-       print('FBS reference' , fbs_ref)
-       #Calculate the Fractional Skill Score (FSS)
-       fss = 1 - (fbs / fbs_ref)
-       print('FSS ' , fss)
-       fss_list.append((fss, len(incrlist)))
-       print(' ')
-   return fss_list
+    #Convolution for "1d" - making 3x3 array with 1. at center
+    filter_array = np.zeros((3,3))
+    filter_array[1,1] = 1.
+    print('Convolution array size: (1, )')
+    print('Convolution array: ', filter_array)
+    start = time.time()
+    frac_arr1 = convolve2d(mask1, filter_array, mode = 'same')
+    frac_arr2 = convolve2d(mask2, filter_array, mode = 'same')
+    end = time.time()
+    print('Calculation time: ', end - start)
+    #Calculate the Fractions Brier Score (FBS)
+    fbs = np.power(frac_arr1 - frac_arr2, 2).sum() / float(bigN)
+    print('FBS ' , fbs)
+    #Calculate the worst possible FBS (assuming no overlap of nonzero fractions)
+    fbs_ref = (np.power(frac_arr1,2).sum() + np.power(frac_arr2,2).sum() ) / float(bigN)
+    print('FBS reference' , fbs_ref)
+    #Calculate the Fractional Skill Score (FSS)
+    fss = 1 - (fbs / fbs_ref)
+    print('FSS ' , fss)
+    fss_tmp = dict({'Conv_array': np.shape(filter_array), 'FBS': fbs, 'FBS_ref': fbs_ref, 'FSS': fss})
+    print(' ')
+    fss_dict[1] = fss_tmp
+    if (plot_fractions == True):
+        fig = plt.figure(1)
+        ax1 = fig.add_subplot(2,1,1) 
+        ax2 = fig.add_subplot(2,1,2) 
+        ax1.imshow(frac_arr1)
+        ax2.imshow(frac_arr2)
+        plt.show()
+
+    #loop for the rest of the convolutions
+    for sz in range(sn[0], sn[1], 2):
+        filter_array = np.ones((sz, sz))
+        filter_array = filter_array * (1/np.sum(filter_array))
+        print('Convolution array size: ', np.shape(filter_array))
+        print('Convolution array: ', filter_array)
+
+        start = time.time()
+        frac_arr1 = convolve2d(mask1, filter_array, mode = 'same')
+        frac_arr2 = convolve2d(mask2, filter_array, mode = 'same')
+        end = time.time()
+        print('Calculation time: ', end - start)
+        
+        #Calculate the Fractions Brier Score (FBS)
+        fbs = np.power(frac_arr1 - frac_arr2, 2).sum() / float(bigN)
+        print('FBS ' , fbs)
+        #Calculate the worst possible FBS (assuming no overlap of nonzero fractions)
+        fbs_ref = (np.power(frac_arr1,2).sum() + np.power(frac_arr2,2).sum() ) / float(bigN)
+        print('FBS reference' , fbs_ref)
+        #Calculate the Fractional Skill Score (FSS)
+        fss = 1 - (fbs / fbs_ref)
+        print('FSS ' , fss)
+        fss_tmp = dict({'Conv_array': np.shape(filter_array), 'FBS': fbs, 'FBS_ref': fbs_ref, 'FSS': fss})
+        if (plot_fractions == True):
+            fig = plt.figure(1)
+            ax1 = fig.add_subplot(2,1,1) 
+            ax2 = fig.add_subplot(2,1,2) 
+            ax1.imshow(frac_arr1)
+            ax2.imshow(frac_arr2)
+            plt.show()
+        print(' ')
+        fss_dict[sz] = fss_tmp
+    return fss_dict
 
 def find_threshold(ra1, ra2, nodata_value=None):
     """
