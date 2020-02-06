@@ -3,7 +3,7 @@ import datetime
 import pandas as pd
 import xarray as xr
 import numpy as np
-from numpy import fromfile, arange
+#from numpy import fromfile, arange
 
 """ Reader for HYPSLIT Model output
 -------------
@@ -329,7 +329,7 @@ class ModelBin(object):
         ahash["Latitude Spacing"] = hdata3["dlat"][0]
         ahash["Longitude Spacing"] = hdata3["dlon"][0]
         ahash["llcrnr longitude"] = hdata3["llcrnr_lon"][0]
-        ahash["llrcrnr latitude"] = hdata3["llcrnr_lat"][0]
+        ahash["llcrnr latitude"] = hdata3["llcrnr_lat"][0]
 
         self.llcrnr_lon = hdata3["llcrnr_lon"][0]
         self.llcrnr_lat = hdata3["llcrnr_lat"][0]
@@ -371,7 +371,7 @@ class ModelBin(object):
         concframe = pd.DataFrame.from_records(ndata)
         concframe["levels"] = lev_name
         concframe["time"] = pdate1
-        
+         
         names = concframe.columns.values
         names = ["y" if x == "jndx" else x for x in names]
         names = ["x" if x == "indx" else x for x in names]
@@ -384,8 +384,8 @@ class ModelBin(object):
         return concframe
 
     def makegrid(self, xindx, yindx):
-        lat = arange(self.llcrnr_lat, self.llcrnr_lat +  self.nlat * self.dlat, self.dlat)
-        lon = arange(self.llcrnr_lon, self.llcrnr_lon + self.nlon * self.dlon, self.dlon)
+        lat = np.arange(self.llcrnr_lat, self.llcrnr_lat +  self.nlat * self.dlat, self.dlat)
+        lon = np.arange(self.llcrnr_lon, self.llcrnr_lon + self.nlon * self.dlon, self.dlon)
         
         lonlist = [lon[x - 1] for x in xindx]
         #print(xindx, yindx)
@@ -430,21 +430,21 @@ class ModelBin(object):
         # start_loc in rec1 tell how many rec there are.
         tempzeroconcdates = []
         # Reads header data. This consists of records 1-5.
-        hdata1 = fromfile(fp, dtype=rec1, count=1)
+        hdata1 = np.fromfile(fp, dtype=rec1, count=1)
         nstartloc = self.parse_header(hdata1)
-        hdata2 = fromfile(fp, dtype=rec2, count=nstartloc)
+        hdata2 = np.fromfile(fp, dtype=rec2, count=nstartloc)
         century = self.parse_hdata2(hdata2, nstartloc, century)
-        hdata3 = fromfile(fp, dtype=rec3, count=1)
+        hdata3 = np.fromfile(fp, dtype=rec3, count=1)
         ahash = self.parse_hdata3(hdata3, ahash)
         # read record 4 which gives information about vertical levels.
-        hdata4a = fromfile(fp, dtype=rec4a, count=1)  # gets number of levels
+        hdata4a = np.fromfile(fp, dtype=rec4a, count=1)  # gets number of levels
         # reads levels, count is number of levels.
-        hdata4b = fromfile(fp, dtype=rec4b, count=hdata4a["nlev"][0])  
+        hdata4b = np.fromfile(fp, dtype=rec4b, count=hdata4a["nlev"][0])  
         self.parse_hdata4(hdata4a, hdata4b)
         # read record 5 which gives information about pollutants / species.
-        hdata5a = fromfile(fp, dtype=rec5a, count=1)
-        fromfile(fp, dtype=rec5b, count=hdata5a["pollnum"][0])
-        fromfile(fp, dtype=rec5c, count=1)
+        hdata5a = np.fromfile(fp, dtype=rec5a, count=1)
+        np.fromfile(fp, dtype=rec5b, count=hdata5a["pollnum"][0])
+        np.fromfile(fp, dtype=rec5c, count=1)
         # hdata5b = fromfile(fp, dtype=rec5b, count=hdata5a['pollnum'][0])
         # hdata5c = fromfile(fp, dtype=rec5c, count=1)
         self.atthash["Number of Species"] = hdata5a["pollnum"][0]
@@ -459,13 +459,14 @@ class ModelBin(object):
         imax = 1e3
         testf = True
         while testf:
-            hdata6 = fromfile(fp, dtype=rec6, count=1)
-            hdata7 = fromfile(fp, dtype=rec6, count=1)
+            hdata6 = np.fromfile(fp, dtype=rec6, count=1)
+            hdata7 = np.fromfile(fp, dtype=rec6, count=1)
             check, pdate1, pdate2 = self.parse_hdata6and7(hdata6, hdata7, century)
             if not check:
                 break
             testf, savedata = check_drange(drange, pdate1, pdate2, verbose)
             print("Sample time", pdate1, " to ", pdate2)
+            dt = pdate2-pdate1
             # datelist = []
             self.atthash["Species ID"] = []
             inc_iii = False
@@ -475,12 +476,12 @@ class ModelBin(object):
                 for pollutant in range(self.atthash["Number of Species"]):
                     # record 8a has the number of elements (ne). If number of
                     # elements greater than 0 than there are concentrations.
-                    hdata8a = fromfile(fp, dtype=rec8a, count=1)
+                    hdata8a = np.fromfile(fp, dtype=rec8a, count=1)
                     self.atthash["Species ID"].append(hdata8a["poll"][0].decode("UTF-8"))
                     # if number of elements is nonzero then
                     if hdata8a["ne"] >= 1:
                         # get rec8 - indx and jndx
-                        hdata8b = fromfile(fp, dtype=rec8b, count=hdata8a["ne"][0])
+                        hdata8b = np.fromfile(fp, dtype=rec8b, count=hdata8a["ne"][0])
                         # add sample start time to list of start times with
                         # non zero conc
                         self.nonzeroconcdates.append(pdate1)
@@ -489,7 +490,7 @@ class ModelBin(object):
                         # or add sample start time to list of start times
                         # with zero conc.
                     # This is just padding.
-                    fromfile(fp, dtype=rec8c, count=1)
+                    np.fromfile(fp, dtype=rec8c, count=1)
                     # if savedata is set and nonzero concentrations then save
                     # the data in a pandas dataframe
                     if savedata and hdata8a["ne"] >= 1:
@@ -522,6 +523,9 @@ class ModelBin(object):
         species.append('empty')
         self.atthash["Species ID"] = species
         self.atthash["Coordinate time description"] = "Beginning of sampling time"
+        #dt = pdate2-pdate1
+        sample_dt = dt.days*24 + dt.seconds / 3600.0
+        self.atthash["Sample time hours"] = sample_dt
         # END OF Loop to go through each sampling time
         if self.dset.variables:
             #Adding buffer to edge of HYSPLIT data

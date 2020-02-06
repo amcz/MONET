@@ -16,6 +16,24 @@ from monet.util import volcMER
 import xarray as xr
 import numpy as np
 
+def getlatlon(dset):
+    """
+    dset : xarray returned by hysplit.open_dataset function
+    RETURNS
+    lat : 1D array of latitudes
+    lon : 1D array of longitudes
+    """
+    llcrnr_lat = dset.attrs['Concentration Grid']['llcrnr latitude']
+    llcrnr_lon = dset.attrs['Concentration Grid']['llcrnr longitude']
+    nlat = dset.attrs['Concentration Grid']['Number Lon Points']
+    nlon = dset.attrs['Concentration Grid']['Number Lat Points']
+    dlat = dset.attrs['Concentration Grid']['Latitude Spacing']
+    dlon = dset.attrs['Concentration Grid']['Longitude Spacing']
+    lat = np.arange(llcrnr_lat, llcrnr_lat +  nlat * dlat, dlat)
+    lon = np.arange(llcrnr_lon, llcrnr_lon + nlon * dlon, dlon)
+    return lat, lon
+        
+
 def hysp_massload(dset, threshold):
     """ Calculate mass loading from HYSPLIT xarray
     Inputs: xarray, ash mass loading threshold (threshold = xx)
@@ -117,7 +135,7 @@ def _delta_multiply(pars, alts):
     while x < (len(alts)):
         delta.append(alts[x] - alts[x-1])
         x += 1
-   #Multiply each level by the delta altitude 
+    #Multiply each level by the delta altitude 
     y = 0
     while y < len(delta):
         pars[:,y,:,:] = pars[:,y,:,:] * delta[y]
