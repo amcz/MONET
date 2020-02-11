@@ -71,8 +71,7 @@ def get_height(dset):
       """Returns array with retrieved height of the highest layer of ash."""
       """Default units are km above sea-level"""
       height = dset.ash_cth
-      h_missing = height._FillValue
-      height = height.where(height != h_missing, drop=True)
+      height = height.where(height != height._FillValue, drop=True)
       return height
 
 def get_radius(dset):
