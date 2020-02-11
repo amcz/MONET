@@ -16,6 +16,26 @@ from monet.util import volcMER
 import xarray as xr
 import numpy as np
 
+def get_latlongrid(dset, xindx, yindx):
+     llcrnr_lat = dset.attrs['Concentration Grid']['llcrnr latitude']
+     llcrnr_lon = dset.attrs['Concentration Grid']['llcrnr longitude']
+     nlat = dset.attrs['Concentration Grid']['Number Lat Points']
+     nlon = dset.attrs['Concentration Grid']['Number Lon Points']
+     dlat = dset.attrs['Concentration Grid']['Latitude Spacing']
+     dlon = dset.attrs['Concentration Grid']['Longitude Spacing']
+ 
+     lat = np.arange(llcrnr_lat, llcrnr_lat +  nlat * dlat, dlat)
+     lon = np.arange(llcrnr_lon, llcrnr_lon +  nlon * dlon, dlon)
+     print(nlat, nlon, dlat, dlon) 
+     print('lon shape', lon.shape)
+     print('lat shape', lat.shape)
+     print(lat)
+     print(lon) 
+     lonlist = [lon[x - 1] for x in xindx]
+     latlist = [lat[x - 1] for x in yindx]
+     mgrid = np.meshgrid(lonlist, latlist)
+     return mgrid
+
 def getlatlon(dset):
     """
     dset : xarray returned by hysplit.open_dataset function
@@ -25,8 +45,8 @@ def getlatlon(dset):
     """
     llcrnr_lat = dset.attrs['Concentration Grid']['llcrnr latitude']
     llcrnr_lon = dset.attrs['Concentration Grid']['llcrnr longitude']
-    nlat = dset.attrs['Concentration Grid']['Number Lon Points']
-    nlon = dset.attrs['Concentration Grid']['Number Lat Points']
+    nlat = dset.attrs['Concentration Grid']['Number Lat Points']
+    nlon = dset.attrs['Concentration Grid']['Number Lon Points']
     dlat = dset.attrs['Concentration Grid']['Latitude Spacing']
     dlon = dset.attrs['Concentration Grid']['Longitude Spacing']
     lat = np.arange(llcrnr_lat, llcrnr_lat +  nlat * dlat, dlat)
