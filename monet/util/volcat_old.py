@@ -1,6 +1,5 @@
-#volcat.py
-#A reader for VOLCAT data using xarray
-#For use with MONET
+#volcat_old.py
+#A reader for reventador VOLCAT data using xarray
 import xarray as xr
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
