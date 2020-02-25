@@ -37,7 +37,7 @@ def HT2unit(HT, verbose=True):
     Inputs: Height (HT) float (in kilometers)
     Output: unit mass in grams. 
     Assume model output is one unit mass per hour. """
-    MER = mastin(HT)
+    MER = mastinMER(HT)
     unit_mass = MER2unit(MER)
     if verbose: print('HEIGHT %0.1f km,  MER %0.3e kg/s , M63 %0.2f , unit mass=%0.3e g/hr.' %(HT, MER, M63, unit_mass))
     return unit_mass
