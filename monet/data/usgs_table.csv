@@ -385,7 +385,7 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 0601-111,06,01,-111,Lubukraya,Sumatra,Holocene?, 1.478,N,, 99.209,E,1862,Stratovolcano,?,S0
 0601-11=,06,01,-11-,Sibualbuali,Sumatra,Holocene?, 1.556,N,, 99.255,E,1819,Stratovolcano,?,S0
 0601-12=,06,01,-12-,Sorikmarapi,Sumatra,Historical, 0.686,N,, 99.539,E,2145,Stratovolcano,D2,S1
-0601-131,06,01,-131,Sarik-Gajah,Sumatra,Holocene?, 0.08,N,,100.20,E,,Pyroclastic cones,?,S0
+0601-131,06,01,-131,Sarik-Gajah,Sumatra,Holocene?, 0.08,N,,100.20,E,737,Pyroclastic cones,?,S0
 0601-13=,06,01,-13-,Talakmau,Sumatra,Holocene, 0.079,N,, 99.98,E,2919,Complex volcano,U,S0
 0601-14=,06,01,-14-,Marapi,Sumatra,Historical, 0.381,S,,100.473,E,2891,Complex volcano,D1,S1
 0601-15=,06,01,-15-,Tandikat,Sumatra,Historical, 0.433,S,,100.317,E,2438,Stratovolcanoes,D2,S1
@@ -717,9 +717,9 @@ NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEF
 0805-08=,08,05,-08-,Kutcharo,Hokkaido-Japan,Tephrochronology,43.608,N,,144.443,E,999,Caldera,D6,S0
 0805-09=,08,05,-09-,Shiretoko-Iwo-zan,Hokkaido-Japan,Historical,44.131,N,,145.165,E,1563,Stratovolcano,D2,S0
 0900-01=,09,00,-01-,Tomariyama (Golovnin),Kuril Is,Historical,43.841,N,,145.509,E,543,Caldera,D3,S0
-0900-021,09,00,-021,Smirnov,Kuril Is,Holocene,44.420,N,,146.135,E,1189,Stratovolcano,U,S0
+0900-021,09,00,-021,Ruruidake (Smirnov),Kuril Is,Holocene,44.420,N,,146.135,E,1189,Stratovolcano,U,S0
 0900-02=,09,00,-02-,Raususan (Mendeleev),Kuril Is,Historical,43.976,N,,145.736,E,888,Stratovolcano,D3,S0
-0900-03=,09,00,-03-,Tiatia,Kuril Is,Historical,44.351,N,,146.256,E,1819,Stratovolcano,D2,M0
+0900-03=,09,00,-03-,Chachadake (Tiatia),Kuril Is,Historical,44.351,N,,146.256,E,1819,Stratovolcano,D2,M0
 0900-041,09,00,-041,Moekeshiwan (Lvinaya Past),Kuril Is,Radiocarbon,44.608,N,,146.994,E,528,Stratovolcano,D7,S0
 0900-04=,09,00,-04-,Berutarubesan (Berutarube),Kuril Is,Holocene,44.459,N,,146.936,E,1221,Stratovolcano,U,S0
 0900-05=,09,00,-05-,Etorofu-Atsonupuri (Atosanupuri),Kuril Is,Historical,44.805,N,,147.135,E,1206,Stratovolcano,D2,S0
