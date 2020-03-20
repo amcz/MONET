@@ -35,7 +35,7 @@ def open_dataset(fname):
       dset = xr.open_dataset(fname,mask_and_scale=False,decode_times=False)
       dset = dset.rename({"Dim1":'y',"Dim0":'x'})
       dset = _get_latlon(dset)
-      dset = _get_time(dset)
+      #dset = _get_time(dset)
       return dset
 
 def open_mfdataset(fname):
